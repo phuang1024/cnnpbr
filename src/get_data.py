@@ -23,6 +23,9 @@ import os
 import requests
 from tqdm import trange
 
+PARENT = os.path.dirname(os.path.realpath(__file__))
+DATA = os.path.join(PARENT, "data")
+
 CHUNK_SIZE = 10
 ENDPOINT = "https://ambientcg.com/api/v2/full_json"
 
