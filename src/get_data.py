@@ -41,6 +41,12 @@ def run(args, cwd="."):
 def get_asset(idname):
     url = f"{DOMAIN}/get?file={idname}_1K-JPG.zip"
 
+    final_dir = os.path.join(DATA, idname)
+    if os.path.isdir(final_dir):
+        print(f"{idname} already exists, not downloading.")
+        return
+    os.makedirs(final_dir)
+
     tmp = os.path.join(DATA, "tmp")
     zip_path = os.path.join(tmp, f"{idname}.zip")
     os.makedirs(tmp, exist_ok=True)
@@ -60,39 +66,34 @@ def get_asset(idname):
     if color is None or f is None:
         print(f"Failed to process {idname}.")
     else:
-        final_dir = os.path.join(DATA, idname)
-        os.makedirs(final_dir, exist_ok=True)
         os.rename(os.path.join(tmp, color), os.path.join(final_dir, "color.jpg"))
         os.rename(os.path.join(tmp, disp), os.path.join(final_dir, "disp.jpg"))
 
     shutil.rmtree(tmp)
 
-def download(count):
-    # For some reason 403 error
-    #url = f"{DOMAIN}/api/v2/full_json?sort=latest&type=PhotoTexturePBR&limit={count}"
-    #r = requests.get(url)
-
-    with open("assets.json", "r") as fp:
-        r = json.load(fp)
+def download(args):
+    url = f"{DOMAIN}/api/v2/full_json?sort=latest&type=Material&limit={args.count}&offset={args.offset}"
+    r = requests.get(url, headers={"User-Agent": "asdf"}).json()
 
     assets = r["foundAssets"]
-    for i in trange(len(assets)):
-        idname = assets[i]["assetId"]
-        get_asset(idname)
+    for i in (pbar := trange(len(assets))):
+        name = assets[i]["assetId"]
+        pbar.set_description(name)
+        get_asset(name)
 
 
 def main():
     parser = argparse.ArgumentParser(description="Physically based rendering texture maps using CNNs.")
     parser.add_argument("-c", "--count", type=int, default=10, help="Number of textures to download.")
+    parser.add_argument("-o", "--offset", type=int, default=0, help="Query offset.")
     args = parser.parse_args()
-    count = args.count
 
-    print(f"Downloading {count} textures from AmbientCG.com")
-    print("Thanks to Lennart Demes, creator of AmbientCG, for providing CC0 assets.")
+    print(f"Downloading {args.count} textures from AmbientCG")
+    print("Thanks to AmbientCG for providing 3D assets: https://ambientcg.com")
+    print("Textures are copyright AmbientCG, licensed as Creative Commons 0.")
     print("Saving textures to ./data")
-    print("Textures are copyright AmbientCG, licensed as Creative Commons 0 1.0 Universal.")
 
-    download(count)
+    download(args)
 
 
 if __name__ == "__main__":
