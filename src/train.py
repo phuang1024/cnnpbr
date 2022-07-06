@@ -1,5 +1,9 @@
+import argparse
+from datetime import datetime
 import os
 import time
+
+from tqdm import trange
 
 import torch
 from torch.utils.data import DataLoader
@@ -11,16 +15,19 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using device {device}")
 
 
-def train(model):
-    dataloader = get_dataloader("../data/train_data_resized", batch_size=128)
+def train(args, model):
+    with open(args.log, "w") as f:
+        f.write(f"Started training at {datetime.now()}\n")
+
+    dataloader = get_dataloader("../data/train_data_resized", batch_size=args.batch_size)
     print(f"Training on {len(dataloader.dataset)} samples")
 
     loss_fn = torch.nn.MSELoss()
-    optim = torch.optim.Adam(model.parameters(), lr=1e-4)
+    optim = torch.optim.Adam(model.parameters(), lr=1e-3)
     print(model)
 
     model.train()
-    for epoch in range(200):
+    for epoch in trange(args.epochs, desc="Epoch"):
         start = time.time()
         for i, (img, disp) in enumerate(dataloader):
             pred = model(img)
@@ -30,20 +37,28 @@ def train(model):
             loss.backward()
             optim.step()
 
-            print(f"\rEpoch: {epoch}, Batch: {i}, Loss: {loss:.4f}", end="", flush=True)
-
-        print(f" Time: {time.time() - start:.2f}")
+            msg = f"Epoch: {epoch}, Batch: {i}, Loss: {loss:.4f}"
+            with open(args.log, "a") as f:
+                f.write(msg + "\n")
 
     return model
 
 
 if __name__ == "__main__":
-    print("Loading model")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--model", default="model.pth", help="Path to model (blank for new model)")
+    parser.add_argument("--epochs", default=500, type=int, help="Number of epochs to train")
+    parser.add_argument("--batch-size", default=256, type=int, help="Batch size")
+    parser.add_argument("--log", default="train.log", help="Path to log file")
+    args = parser.parse_args()
+
     model = ColorToDisp()
-    model.load_state_dict(torch.load("model.pth"))
+    if args.model:
+        print("Loading model")
+        model.load_state_dict(torch.load("model.pth"))
     model = model.to(device)
 
-    train(model)
+    train(args, model)
 
     print("Saving model")
     torch.save(model.state_dict(), "model.pth")
