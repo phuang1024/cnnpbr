@@ -7,7 +7,7 @@ from dataset import IMG_SIZE
 # Hyperparameters
 START_CHANNELS = 4
 CONV_LAYERS = 3
-ACTIVATION = nn.ReLU
+LRELU_ALPHA = 0.2
 
 
 class Down(nn.Module):
@@ -20,7 +20,7 @@ class Down(nn.Module):
 
         self.conv = nn.Conv2d(in_size, out_size, 3, padding=1)
         self.bn = nn.BatchNorm2d(out_size)
-        self.relu = ACTIVATION()
+        self.relu = nn.LeakyReLU(LRELU_ALPHA)
 
     def forward(self, x):
         x = self.conv(x)
@@ -39,7 +39,7 @@ class Up(nn.Module):
 
         self.conv = nn.ConvTranspose2d(in_size, out_size, 3, padding=1)
         self.bn = nn.BatchNorm2d(out_size)
-        self.relu = ACTIVATION()
+        self.relu = nn.LeakyReLU(LRELU_ALPHA)
 
     def forward(self, x):
         x = self.conv(x)

@@ -69,7 +69,7 @@ if __name__ == "__main__":
     parser.add_argument("--resume", action="store_true",
         help="Continue training from a previous model")
     parser.add_argument("--epochs", default=500, type=int, help="Number of epochs to train")
-    parser.add_argument("--batch-size", default=128, type=int, help="Batch size")
+    parser.add_argument("--batch-size", default=64, type=int, help="Batch size")
     parser.add_argument("--lr", default=1e-3, type=float, help="Learning rate")
     parser.add_argument("--log", default="train.log", help="Path to log file")
     args = parser.parse_args()
