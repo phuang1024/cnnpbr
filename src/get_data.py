@@ -99,7 +99,7 @@ def main():
     print(f"Downloading {args.count} textures from AmbientCG")
     print("Thanks to AmbientCG for providing 3D assets: https://ambientcg.com")
     print("Textures are copyright AmbientCG, licensed as Creative Commons 0.")
-    print("Saving textures to ./data")
+    print(f"Saving textures to {args.output}")
 
     download(args)
 
