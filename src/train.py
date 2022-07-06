@@ -44,12 +44,9 @@ def train(args, model):
             with open(args.log, "a") as f:
                 f.write(msg + "\n")
 
-        losses.append(loss)
+        losses.append(loss.cpu().item())
 
-    plt.plot(losses)
-    plt.show()
-
-    return model
+    return losses
 
 
 if __name__ == "__main__":
@@ -57,7 +54,7 @@ if __name__ == "__main__":
     parser.add_argument("--resume", action="store_true",
         help="Continue training from a previous model")
     parser.add_argument("--epochs", default=500, type=int, help="Number of epochs to train")
-    parser.add_argument("--batch-size", default=256, type=int, help="Batch size")
+    parser.add_argument("--batch-size", default=128, type=int, help="Batch size")
     parser.add_argument("--log", default="train.log", help="Path to log file")
     args = parser.parse_args()
 
@@ -67,9 +64,13 @@ if __name__ == "__main__":
         model.load_state_dict(torch.load("model.pth"))
     model = model.to(device)
 
-    train(args, model)
+    losses = train(args, model)
 
     print("Saving model to model.pth")
     torch.save(model.state_dict(), "model.pth")
+
+    print("Plotting losses")
+    plt.plot(losses)
+    plt.show()
 
     print("Done")

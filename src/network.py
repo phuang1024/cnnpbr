@@ -52,33 +52,30 @@ class ColorToDisp(nn.Module):
     U-net from color map to displacement map.
     """
 
-    initial_ch = 16
+    channels = 4
+    layers = 3
 
     def __init__(self):
         super(ColorToDisp, self).__init__()
 
-        ch = self.initial_ch
+        downs = []
+        ups = []
 
-        self.down1 = Down(3, ch)
-        self.down2 = Down(ch, ch*2)
-        self.down3 = Down(ch*2, ch*4)
-        self.down4 = Down(ch*4, ch*8)
+        for i in range(self.layers):
+            in_size = -1 if i == 0 else self.channels * 2 ** (i-1)
+            out_size = self.channels * 2 ** i
 
-        self.up1 = Up(ch, 1)
-        self.up2 = Up(ch*2, ch)
-        self.up3 = Up(ch*4, ch*2)
-        self.up4 = Up(ch*8, ch*4)
+            down = Down((3 if in_size == -1 else in_size), out_size)
+            up = Up(out_size, (1 if in_size == -1 else in_size))
+            downs.append(down)
+            ups.append(up)
 
+        self.downs = nn.Sequential(*downs)
+        self.ups = nn.Sequential(*reversed(ups))
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
-        x = self.down1(x)
-        x = self.down2(x)
-        x = self.down3(x)
-        x = self.down4(x)
-        x = self.up4(x)
-        x = self.up3(x)
-        x = self.up2(x)
-        x = self.up1(x)
-        #x = self.sigmoid(x)
+        x = self.downs(x)
+        x = self.ups(x)
+        x = self.sigmoid(x)
         return x

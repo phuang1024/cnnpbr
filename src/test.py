@@ -12,6 +12,8 @@ def test(model):
     dataloader = get_dataloader("../data/test_data_resized", batch_size=10)
 
     # Evaluate each image in the dataset and plot test, ground truth, and prediction
+    count = len(dataloader.dataset)
+    next_i = 0
     for color, disp in dataloader:
         color, disp = color.to(device), disp.to(device)
         pred = model(color) * 255
@@ -19,16 +21,16 @@ def test(model):
             color.detach().cpu().numpy(), disp.detach().cpu().numpy(), pred.detach().cpu().numpy()
 
         # Display images
-        count = min(6, color.shape[0])
-        for i in range(count):
-            plt.subplot(3, count, i+1)
+        for i in range(color.shape[0]):
+            plt.subplot(3, count, next_i+1)
             plt.imshow(color[i].transpose(1, 2, 0))
-            plt.subplot(3, count, count+i+1)
+            plt.subplot(3, count, count+next_i+1)
             plt.imshow(disp[i].transpose(1, 2, 0))
-            plt.subplot(3, count, 2*count+i+1)
+            plt.subplot(3, count, 2*count+next_i+1)
             plt.imshow(pred[i].transpose(1, 2, 0))
+            next_i += 1
 
-        plt.show()
+    plt.show()
 
 
 if __name__ == "__main__":
