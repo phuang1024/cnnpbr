@@ -12,7 +12,7 @@ print(f"Using device {device}")
 
 
 def train(model):
-    dataloader = get_dataloader("train_data", batch_size=128)
+    dataloader = get_dataloader("../data/train_data_resized", batch_size=128)
     print(f"Training on {len(dataloader.dataset)} samples")
 
     loss_fn = torch.nn.MSELoss()
