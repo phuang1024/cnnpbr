@@ -15,6 +15,9 @@ def train():
     model = ColorToDisp().to(device)
     print(model)
 
+    return model
+
 
 if __name__ == "__main__":
-    train()
+    model = train()
+    torch.save(model.state_dict(), "model.pth")
