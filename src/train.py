@@ -16,6 +16,7 @@ def train():
     model = ColorToDisp().to(device)
     loss_fn = torch.nn.MSELoss()
     optim = torch.optim.Adam(model.parameters(), lr=1e-3)
+    print(model)
 
     model.train()
     for epoch in range(10):

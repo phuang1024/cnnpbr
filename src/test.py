@@ -14,7 +14,7 @@ def test(model):
     # Evaluate each image in the dataset and plot test, ground truth, and prediction
     for color, disp in dataloader:
         color, disp = color.to(device), disp.to(device)
-        pred = model(color)
+        pred = model(color) * 255
         color, disp, pred = \
             color.detach().cpu().numpy(), disp.detach().cpu().numpy(), pred.detach().cpu().numpy()
 

@@ -34,7 +34,7 @@ class TextureDataset(Dataset):
         return color, disp
 
 
-def get_dataloader(directory, batch_size=256):
+def get_dataloader(directory, batch_size=16):
     dataset = TextureDataset(directory)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
     return dataloader
