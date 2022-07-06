@@ -9,10 +9,10 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 def test(model):
-    dataloader = get_dataloader("../data/test_data_resized", batch_size=10)
+    dataloader = get_dataloader("../data/data_resized", batch_size=10)
 
     # Evaluate each image in the dataset and plot test, ground truth, and prediction
-    count = len(dataloader.dataset)
+    count = 10
     next_i = 0
     for color, disp in dataloader:
         color, disp = color.to(device), disp.to(device)
@@ -29,6 +29,9 @@ def test(model):
             plt.subplot(3, count, 2*count+next_i+1)
             plt.imshow(pred[i].transpose(1, 2, 0))
             next_i += 1
+            if next_i == count:
+                plt.show()
+                next_i = 0
 
     plt.show()
 

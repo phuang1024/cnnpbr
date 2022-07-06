@@ -7,10 +7,12 @@ import matplotlib.pyplot as plt
 from tqdm import trange
 
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, random_split
 
-from dataset import get_dataloader
+from dataset import TextureDataset
 from network import ColorToDisp
+
+TRAIN_DATA_FACTOR = 0.9
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using device {device}")
@@ -20,8 +22,13 @@ def train(args, model):
     with open(args.log, "w") as f:
         f.write(f"Started training at {datetime.now()}\n")
 
-    dataloader = get_dataloader("../data/train_data_resized", batch_size=args.batch_size)
-    print(f"Training on {len(dataloader.dataset)} samples")
+    dataset = TextureDataset("../data/data_resized")
+    train_count = int(len(dataset) * TRAIN_DATA_FACTOR)
+    train_data, test_data = random_split(dataset, [train_count, len(dataset) - train_count])
+    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
+    test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=True)
+    print(f"Training samples: {len(train_loader.dataset)},"
+          f"test samples: {len(test_loader.dataset)}")
 
     loss_fn = torch.nn.MSELoss()
     optim = torch.optim.Adam(model.parameters(), lr=args.lr)
@@ -29,12 +36,11 @@ def train(args, model):
     print(f"Using optimizer {optim}")
     print(model)
 
-    model.train()
-
     losses = []
     for epoch in trange(args.epochs, desc="Epoch"):
-        start = time.time()
-        for i, (img, disp) in enumerate(dataloader):
+        # Train model
+        model.train()
+        for i, (img, disp) in enumerate(train_loader):
             pred = model(img)
             loss = loss_fn(pred, disp)
 
@@ -46,7 +52,14 @@ def train(args, model):
             with open(args.log, "a") as f:
                 f.write(msg + "\n")
 
-        losses.append(loss.cpu().item())
+        # Compute average loss on test dataset
+        avg_loss = 0
+        model.eval()
+        for img, disp in test_loader:
+            pred = model(img)
+            avg_loss += loss_fn(pred, disp).item()
+        avg_loss /= len(test_loader)
+        losses.append(avg_loss)
 
     return losses
 
