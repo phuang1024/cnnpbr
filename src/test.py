@@ -9,7 +9,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 def test(model):
-    dataloader = get_dataloader("../data/test_data_resized", batch_size=64)
+    dataloader = get_dataloader("../data/test_data_resized", batch_size=10)
 
     # Evaluate each image in the dataset and plot test, ground truth, and prediction
     for color, disp in dataloader:

@@ -35,7 +35,7 @@ class Up(nn.Module):
         super(Up, self).__init__()
 
         self.up = nn.Upsample(scale_factor=2, mode="bilinear")
-        self.conv = nn.Conv2d(in_size, out_size, 3, padding=1)
+        self.conv = nn.ConvTranspose2d(in_size, out_size, 3, padding=1)
         self.bn = nn.BatchNorm2d(out_size)
         self.relu = nn.ReLU()
 
@@ -52,41 +52,33 @@ class ColorToDisp(nn.Module):
     U-net from color map to displacement map.
     """
 
+    initial_ch = 16
+
     def __init__(self):
         super(ColorToDisp, self).__init__()
 
-        self.down1 = Down(3, 4)
-        self.down2 = Down(4, 8)
-        self.down3 = Down(8, 16)
-        self.down4 = Down(16, 32)
-        self.down5 = Down(32, 64)
-        self.down6 = Down(64, 128)
-        self.down7 = Down(128, 256)
-        self.down8 = Down(256, 512)
-        self.up2 = Up(512, 256)
-        self.up3 = Up(256, 128)
-        self.up4 = Up(128, 64)
-        self.up5 = Up(64, 32)
-        self.up6 = Up(32, 16)
-        self.up7 = Up(16, 8)
-        self.up8 = Up(8, 4)
-        self.up9 = Up(4, 1)
+        ch = self.initial_ch
+
+        self.down1 = Down(3, ch)
+        self.down2 = Down(ch, ch*2)
+        self.down3 = Down(ch*2, ch*4)
+        self.down4 = Down(ch*4, ch*8)
+
+        self.up1 = Up(ch, 1)
+        self.up2 = Up(ch*2, ch)
+        self.up3 = Up(ch*4, ch*2)
+        self.up4 = Up(ch*8, ch*4)
+
+        self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
         x = self.down1(x)
         x = self.down2(x)
         x = self.down3(x)
         x = self.down4(x)
-        x = self.down5(x)
-        x = self.down6(x)
-        x = self.down7(x)
-        x = self.down8(x)
-        x = self.up2(x)
-        x = self.up3(x)
         x = self.up4(x)
-        x = self.up5(x)
-        x = self.up6(x)
-        x = self.up7(x)
-        x = self.up8(x)
-        x = self.up9(x)
+        x = self.up3(x)
+        x = self.up2(x)
+        x = self.up1(x)
+        #x = self.sigmoid(x)
         return x
