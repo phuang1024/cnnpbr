@@ -24,7 +24,9 @@ def train(args, model):
     print(f"Training on {len(dataloader.dataset)} samples")
 
     loss_fn = torch.nn.MSELoss()
-    optim = torch.optim.Adam(model.parameters(), lr=1e-3)
+    optim = torch.optim.Adam(model.parameters(), lr=args.lr)
+    print(f"Using loss function {loss_fn}")
+    print(f"Using optimizer {optim}")
     print(model)
 
     model.train()
@@ -55,6 +57,7 @@ if __name__ == "__main__":
         help="Continue training from a previous model")
     parser.add_argument("--epochs", default=500, type=int, help="Number of epochs to train")
     parser.add_argument("--batch-size", default=128, type=int, help="Batch size")
+    parser.add_argument("--lr", default=1e-3, type=float, help="Learning rate")
     parser.add_argument("--log", default="train.log", help="Path to log file")
     args = parser.parse_args()
 
