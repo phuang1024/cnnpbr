@@ -20,11 +20,14 @@
 import argparse
 import json
 import os
+import random
 import shutil
+import time
 from subprocess import Popen, DEVNULL
+from threading import Thread
 
 import requests
-from tqdm import trange
+from tqdm import tqdm
 
 PARENT = os.path.dirname(os.path.realpath(__file__))
 DATA = os.path.join(PARENT, "data")
@@ -47,7 +50,7 @@ def get_asset(idname):
         return
     os.makedirs(final_dir)
 
-    tmp = os.path.join(DATA, "tmp")
+    tmp = os.path.join(DATA, f"tmp{random.randint(0, 1e9)}")
     zip_path = os.path.join(tmp, f"{idname}.zip")
     os.makedirs(tmp, exist_ok=True)
 
@@ -76,16 +79,31 @@ def download(args):
     r = requests.get(url, headers={"User-Agent": "asdf"}).json()
 
     assets = r["foundAssets"]
-    for i in (pbar := trange(len(assets))):
-        name = assets[i]["assetId"]
+
+    threads = [None] * args.jobs
+    for asset in (pbar := tqdm(assets)):
+        while True:
+            time.sleep(0.01)
+            for i in range(args.jobs):
+                if threads[i] is None or not threads[i].is_alive():
+                    break
+            else:
+                continue
+            break
+
+        name = asset["assetId"]
         pbar.set_description(name)
-        get_asset(name)
+
+        thread = Thread(target=get_asset, args=(name,))
+        thread.start()
+        threads[i] = thread
 
 
 def main():
     parser = argparse.ArgumentParser(description="Physically based rendering texture maps using CNNs.")
     parser.add_argument("-c", "--count", type=int, default=10, help="Number of textures to download.")
     parser.add_argument("-o", "--offset", type=int, default=0, help="Query offset.")
+    parser.add_argument("-j", "--jobs", type=int, default=1, help="Number of threads to use.")
     args = parser.parse_args()
 
     print(f"Downloading {args.count} textures from AmbientCG")
