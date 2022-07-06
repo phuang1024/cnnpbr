@@ -14,7 +14,7 @@ class Down(nn.Module):
         super(Down, self).__init__()
 
         self.conv = nn.Conv2d(in_size, out_size, 3, padding=1)
-        self.maxpool = nn.MaxPool2d(2, 2)
+        #self.maxpool = nn.MaxPool2d(2, 2)
         self.bn = nn.BatchNorm2d(out_size)
         self.relu = nn.ReLU()
 
@@ -22,7 +22,7 @@ class Down(nn.Module):
         x = self.conv(x)
         x = self.bn(x)
         x = self.relu(x)
-        x = self.maxpool(x)
+        #x = self.maxpool(x)
         return x
 
 
@@ -34,13 +34,13 @@ class Up(nn.Module):
     def __init__(self, in_size, out_size):
         super(Up, self).__init__()
 
-        self.up = nn.Upsample(scale_factor=2, mode="bilinear")
+        #self.up = nn.Upsample(scale_factor=2, mode="bilinear")
         self.conv = nn.ConvTranspose2d(in_size, out_size, 3, padding=1)
         self.bn = nn.BatchNorm2d(out_size)
         self.relu = nn.ReLU()
 
     def forward(self, x):
-        x = self.up(x)
+        #x = self.up(x)
         x = self.conv(x)
         x = self.bn(x)
         x = self.relu(x)

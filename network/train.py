@@ -25,9 +25,9 @@ def train(args, model):
     dataset = TextureDataset("../data/data_resized")
     train_count = int(len(dataset) * TRAIN_DATA_FACTOR)
     train_data, test_data = random_split(dataset, [train_count, len(dataset) - train_count])
-    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
-    test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=True)
-    print(f"Training samples: {len(train_loader.dataset)},"
+    train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True)
+    test_loader = DataLoader(test_data, batch_size=args.batch_size, shuffle=True)
+    print(f"Training samples: {len(train_loader.dataset)}, "
           f"test samples: {len(test_loader.dataset)}")
 
     loss_fn = torch.nn.MSELoss()

@@ -1,15 +1,17 @@
 import matplotlib.pyplot as plt
 
 import torch
+from torch.utils.data import DataLoader
 
-from dataset import get_dataloader
+from dataset import TextureDataset
 from network import ColorToDisp
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 def test(model):
-    dataloader = get_dataloader("../data/data_resized", batch_size=10)
+    dataset = TextureDataset("../data/data_resized")
+    dataloader = DataLoader(dataset, batch_size=10)
 
     # Evaluate each image in the dataset and plot test, ground truth, and prediction
     count = 10
