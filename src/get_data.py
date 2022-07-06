@@ -30,7 +30,6 @@ import requests
 from tqdm import tqdm
 
 PARENT = os.path.dirname(os.path.realpath(__file__))
-DATA = os.path.join(PARENT, "data")
 
 CHUNK_SIZE = 20
 DOMAIN = "https://ambientcg.com"
@@ -41,16 +40,16 @@ def run(args, cwd="."):
     Popen(args, cwd=cwd, stdout=DEVNULL, stderr=DEVNULL).wait()
 
 
-def get_asset(idname):
+def get_asset(output, idname):
     url = f"{DOMAIN}/get?file={idname}_1K-JPG.zip"
 
-    final_dir = os.path.join(DATA, idname)
+    final_dir = os.path.join(output, idname)
     if os.path.isdir(final_dir):
         print(f"{idname} already exists, not downloading.")
         return
     os.makedirs(final_dir)
 
-    tmp = os.path.join(DATA, f"tmp{random.randint(0, 1e9)}")
+    tmp = os.path.join(output, f"tmp{random.randint(0, 1e9)}")
     zip_path = os.path.join(tmp, f"{idname}.zip")
     os.makedirs(tmp, exist_ok=True)
 
@@ -94,7 +93,7 @@ def download(args):
         name = asset["assetId"]
         pbar.set_description(name)
 
-        thread = Thread(target=get_asset, args=(name,))
+        thread = Thread(target=get_asset, args=(args.output, name))
         thread.start()
         threads[i] = thread
 
@@ -104,6 +103,7 @@ def main():
     parser.add_argument("-c", "--count", type=int, default=10, help="Number of textures to download.")
     parser.add_argument("-o", "--offset", type=int, default=0, help="Query offset.")
     parser.add_argument("-j", "--jobs", type=int, default=1, help="Number of threads to use.")
+    parser.add_argument("--output", required=True, help="Output path.")
     args = parser.parse_args()
 
     print(f"Downloading {args.count} textures from AmbientCG")
