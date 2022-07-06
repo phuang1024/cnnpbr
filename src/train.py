@@ -1,4 +1,5 @@
 import os
+import time
 
 import torch
 from torch.utils.data import DataLoader
@@ -10,20 +11,18 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using device {device}")
 
 
-def train():
-    dataloader = get_dataloader("train_data")
+def train(model):
+    dataloader = get_dataloader("train_data", batch_size=128)
+    print(f"Training on {len(dataloader.dataset)} samples")
 
-    model = ColorToDisp().to(device)
     loss_fn = torch.nn.MSELoss()
-    optim = torch.optim.Adam(model.parameters(), lr=1e-3)
+    optim = torch.optim.Adam(model.parameters(), lr=1e-4)
     print(model)
 
     model.train()
-    for epoch in range(10):
+    for epoch in range(200):
+        start = time.time()
         for i, (img, disp) in enumerate(dataloader):
-            img = img.to(device)
-            disp = disp.to(device)
-
             pred = model(img)
             loss = loss_fn(pred, disp)
 
@@ -31,14 +30,22 @@ def train():
             loss.backward()
             optim.step()
 
-            if i % 100 == 0:
-                print(f"Epoch: {epoch}, Step: {i}, Loss: {loss}")
+            print(f"\rEpoch: {epoch}, Batch: {i}, Loss: {loss:.4f}", end="", flush=True)
+
+        print(f" Time: {time.time() - start:.2f}")
 
     return model
 
 
 if __name__ == "__main__":
-    model = train()
+    print("Loading model")
+    model = ColorToDisp()
+    model.load_state_dict(torch.load("model.pth"))
+    model = model.to(device)
+
+    train(model)
+
     print("Saving model")
     torch.save(model.state_dict(), "model.pth")
+
     print("Done")

@@ -62,18 +62,17 @@ def get_asset(output, idname):
 
     shutil.rmtree(tmp)
 
-def download(args):
-    url = f"{DOMAIN}/api/v2/full_json?sort=latest&type=Material&" + \
-        f"limit={args.count}&offset={args.offset}"
+def download(jobs, output, count, offset):
+    url = f"{DOMAIN}/api/v2/full_json?sort=latest&type=Material&limit={count}&offset={offset}"
     r = requests.get(url, headers={"User-Agent": "asdf"}).json()
 
     assets = r["foundAssets"]
 
-    threads = [None] * args.jobs
+    threads = [None] * jobs
     for asset in (pbar := tqdm(assets)):
         while True:
             time.sleep(0.01)
-            for i in range(args.jobs):
+            for i in range(jobs):
                 if threads[i] is None or not threads[i].is_alive():
                     break
             else:
@@ -83,7 +82,7 @@ def download(args):
         name = asset["assetId"]
         pbar.set_description(name)
 
-        thread = Thread(target=get_asset, args=(args.output, name))
+        thread = Thread(target=get_asset, args=(output, name))
         thread.start()
         threads[i] = thread
 
@@ -101,7 +100,10 @@ def main():
     print("Textures are copyright AmbientCG, licensed as Creative Commons 0.")
     print(f"Saving textures to {args.output}")
 
-    download(args)
+    for start in range(args.offset, args.offset+args.count, 100):
+        end = min(start+100, args.offset+args.count)
+        count = end - start
+        download(args.jobs, args.output, count, start)
 
 
 if __name__ == "__main__":
