@@ -23,7 +23,7 @@ import os
 import random
 import shutil
 import time
-from subprocess import Popen, DEVNULL
+from subprocess import Popen, STDOUT, PIPE
 from threading import Thread
 
 import requests
@@ -33,48 +33,57 @@ PARENT = os.path.dirname(os.path.realpath(__file__))
 
 CHUNK_SIZE = 20
 DOMAIN = "https://ambientcg.com"
+REQUIRED_MAPS = ["color", "disp", "rough", "normal"]
 
 
 def run(args, cwd="."):
     cwd = os.path.abspath(cwd)
-    Popen(args, cwd=cwd, stdout=DEVNULL, stderr=DEVNULL).wait()
+    p = Popen(args, cwd=cwd, stdout=PIPE, stderr=STDOUT)
+    p.wait()
+    if p.returncode != 0:
+        print(p.stdout.read().decode())
 
 
 def get_asset(output, idname):
-    url = f"{DOMAIN}/get?file={idname}_1K-JPG.zip"
+    url = f"{DOMAIN}/get?file={idname}_2K-JPG.zip"
 
     final_dir = os.path.join(output, idname)
     if os.path.isdir(final_dir):
         print(f"{idname} already exists, not downloading.")
         return
-    os.makedirs(final_dir)
 
     tmp = os.path.join(output, f"tmp{random.randint(0, 1e9)}")
     zip_path = os.path.join(tmp, f"{idname}.zip")
     os.makedirs(tmp, exist_ok=True)
 
     run(["wget", url, "-O", zip_path])
-    run(["unzip", "-o", zip_path], cwd=tmp)
+    run(["unzip", "-o", f"{idname}.zip"], cwd=tmp)
 
     files = [f for f in os.listdir(tmp) if f.endswith(".jpg")]
-    color = None
-    disp = None
+    maps = {}
     for f in files:
-        if "color" in f.lower():
-            color = f
-        if "disp" in f.lower():
-            disp = f
+        name = f.lower()
+        if "color" in name:
+            maps["color"] = f
+        if "displacement" in name:
+            maps["disp"] = f
+        if "roughness" in name:
+            maps["rough"] = f
+        if "normalgl" in name:
+            maps["normal"] = f
 
-    if color is None or f is None:
+    if len(maps) != len(REQUIRED_MAPS):
         print(f"Failed to process {idname}.")
     else:
-        os.rename(os.path.join(tmp, color), os.path.join(final_dir, "color.jpg"))
-        os.rename(os.path.join(tmp, disp), os.path.join(final_dir, "disp.jpg"))
+        os.makedirs(final_dir)
+        for k, v in maps.items():
+            os.rename(os.path.join(tmp, v), os.path.join(final_dir, f"{k}.jpg"))
 
     shutil.rmtree(tmp)
 
 def download(args):
-    url = f"{DOMAIN}/api/v2/full_json?sort=latest&type=Material&limit={args.count}&offset={args.offset}"
+    url = f"{DOMAIN}/api/v2/full_json?sort=latest&type=Material&" + \
+        f"limit={args.count}&offset={args.offset}"
     r = requests.get(url, headers={"User-Agent": "asdf"}).json()
 
     assets = r["foundAssets"]
