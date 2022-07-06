@@ -10,7 +10,7 @@ import torch
 from torch.utils.data import DataLoader, random_split
 
 from dataset import TextureDataset
-from network import ColorToDisp
+from network import CNNPBRModel
 
 TRAIN_DATA_FACTOR = 0.9
 
@@ -74,7 +74,7 @@ if __name__ == "__main__":
     parser.add_argument("--log", default="train.log", help="Path to log file")
     args = parser.parse_args()
 
-    model = ColorToDisp()
+    model = CNNPBRModel()
     if args.resume:
         print("Loading model")
         model.load_state_dict(torch.load("model.pth"))

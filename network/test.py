@@ -4,7 +4,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from dataset import TextureDataset
-from network import ColorToDisp
+from network import CNNPBRModel
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -39,7 +39,7 @@ def test(model):
 
 
 if __name__ == "__main__":
-    model = ColorToDisp()
+    model = CNNPBRModel()
     model.load_state_dict(torch.load("model.pth"))
     model = model.to(device)
     test(model)
