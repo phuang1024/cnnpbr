@@ -14,11 +14,14 @@ from network import CNNPBRModel
 
 TRAIN_DATA_FACTOR = 0.9
 
+LAYERS = 3
+
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using device {device}")
 
 
 def train(args, model):
+    print("Batch size:", args.batch_size)
     with open(args.log, "w") as f:
         f.write(f"Started training at {datetime.now()}\n")
 
@@ -48,9 +51,9 @@ def train(args, model):
             loss.backward()
             optim.step()
 
-            msg = f"Epoch: {epoch}, Batch: {i}, Loss: {loss:.4f}"
-            with open(args.log, "a") as f:
-                f.write(msg + "\n")
+        msg = f"Epoch: {epoch}, Loss: {loss:.4f}"
+        with open(args.log, "a") as f:
+            f.write(msg + "\n")
 
         # Compute average loss on test dataset
         avg_loss = 0
@@ -69,12 +72,12 @@ if __name__ == "__main__":
     parser.add_argument("--resume", action="store_true",
         help="Continue training from a previous model")
     parser.add_argument("--epochs", default=100, type=int, help="Number of epochs to train")
-    parser.add_argument("--batch-size", default=64, type=int, help="Batch size")
+    parser.add_argument("--batch-size", default=32, type=int, help="Batch size")
     parser.add_argument("--lr", default=1e-3, type=float, help="Learning rate")
     parser.add_argument("--log", default="train.log", help="Path to log file")
     args = parser.parse_args()
 
-    model = CNNPBRModel()
+    model = CNNPBRModel(layers=LAYERS)
     if args.resume:
         print("Loading model")
         model.load_state_dict(torch.load("model.pth"))

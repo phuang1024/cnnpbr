@@ -4,107 +4,101 @@ from torch.utils.data import Dataset
 
 from dataset import IMG_SIZE
 
-# Hyperparameters
-CONV_LAYERS = 5
-LRELU_ALPHA = 0.2
 
-
-class Down(nn.Module):
+class ConvDown(nn.Module):
     """
-    Convolution 2D and MaxPooling 2D
+    2x (conv, batchnorm, leakyrelu)
     """
 
-    def __init__(self, in_size, out_size):
-        super(Down, self).__init__()
-
-        self.conv = nn.Conv2d(in_size, out_size, 3, padding=1)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.bn = nn.BatchNorm2d(out_size)
-        self.relu = nn.LeakyReLU(LRELU_ALPHA)
+    def __init__(self, in_channels, out_channels, alpha=0.2):
+        super().__init__()
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.conv = nn.Conv2d(in_channels, out_channels, 3, padding=1)
+        self.bn = nn.BatchNorm2d(out_channels)
+        self.lrelu = nn.LeakyReLU(alpha)
 
     def forward(self, x):
         x = self.conv(x)
-        x = self.pool(x)
         x = self.bn(x)
-        x = self.relu(x)
+        x = self.lrelu(x)
         return x
 
 
-class Up(nn.Module):
+class ConvUp(nn.Module):
     """
-    Upsample 2D and Convolution 2D transpose
+    conv transpose, batchnorm, leakyrelu
     """
 
-    def __init__(self, in_size, out_size):
-        super(Up, self).__init__()
-
-        self.conv = nn.ConvTranspose2d(in_size, out_size, 3, padding=1)
-        self.upsamp = nn.Upsample(scale_factor=2, mode="bilinear")
-        self.bn = nn.BatchNorm2d(out_size)
-        self.relu = nn.LeakyReLU(LRELU_ALPHA)
+    def __init__(self, in_channels, out_channels, alpha=0.2):
+        super().__init__()
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.conv = nn.ConvTranspose2d(in_channels, out_channels, 3, padding=1)
+        self.bn = nn.BatchNorm2d(out_channels)
+        self.lrelu = nn.LeakyReLU(alpha)
 
     def forward(self, x):
         x = self.conv(x)
-        x = self.upsamp(x)
         x = self.bn(x)
-        x = self.relu(x)
+        x = self.lrelu(x)
         return x
 
 
 class CNNPBRModel(nn.Module):
-    def __init__(self):
-        super(CNNPBRModel, self).__init__()
+    """
+    U-net.
+    """
 
-        downs = []
-        ups = []
+    def __init__(self, layers=4, alpha=0.2):
+        super().__init__()
 
-        # Down layers
-        down_sizes = []
-        for i in range(CONV_LAYERS+1):
-            size = 3 if i == 0 else 2 ** (i+1)
-            down_sizes.append(size)
+        self.layers = layers
 
-        for i in range(CONV_LAYERS):
-            layer = Down(down_sizes[i], down_sizes[i+1])
-            setattr(self, f"down{i}", layer)
+        # Left, down layers
+        for i in range(layers):
+            in_channels = 3 if i == 0 else getattr(self, f"down{i-1}").out_channels
+            out_channels = 2 ** (i+2)
 
-        # Up layers
-        up_sizes = []  # list of (layer_output_depth, after_concat_depth)
-        for i in range(CONV_LAYERS+1):
-            if i == 0:
-                size = 2 ** (CONV_LAYERS+1)
-            elif i == CONV_LAYERS:
-                size = up_sizes[-1][1] // 2
-            else:
-                output_size = up_sizes[-1][1] // 2
-                real_size = output_size + down_sizes[CONV_LAYERS-i]
-                up_sizes.append((output_size, real_size))
-                continue
+            conv = ConvDown(in_channels, out_channels, alpha)
+            setattr(self, f"down{i}", conv)
 
-            up_sizes.append((size, size))
+            if i != layers-1:
+                maxpool = nn.MaxPool2d(2)
+                setattr(self, f"maxpool{i}", maxpool)
 
-        for i in range(CONV_LAYERS):
-            layer = Up(up_sizes[i][1], up_sizes[i+1][0])
-            setattr(self, f"up{i}", layer)
+        # Right, up layers
+        for i in range(layers-1):
+            in_channels = getattr(self, f"down{layers-1}").out_channels if i == 0 else \
+                getattr(self, f"up{i-1}").out_channels
 
-        self.regression = nn.Conv2d(up_sizes[-1][1], 1, 1)
+            upsamp = nn.Upsample(scale_factor=2, mode="bilinear")
+            setattr(self, f"upsamp{i}", upsamp)
+
+            # Concatenates upsamp with corresponding down layer
+            real_in_channels = getattr(self, f"down{layers-i-2}").out_channels + in_channels
+            out_channels = real_in_channels // 2
+            conv = ConvUp(real_in_channels, out_channels, alpha)
+            setattr(self, f"up{i}", conv)
+
+        self.regression = nn.Conv2d(getattr(self, f"up{layers-2}").out_channels, 1, 1)
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
-        outputs = []
-        for i in range(CONV_LAYERS):
-            down = getattr(self, f"down{i}")
-            x = down(x)
-            outputs.append(x)
+        # Left, down layers
+        lefts = []
+        for i in range(self.layers):
+            x = getattr(self, f"down{i}")(x)
+            lefts.append(x)
+            if i != self.layers-1:
+                x = getattr(self, f"maxpool{i}")(x)
 
-        for i in range(CONV_LAYERS):
-            up = getattr(self, f"up{i}")
-            x = up(x)
-            if i != CONV_LAYERS - 1:
-                # Dimensions are (batch, channels, width, height)
-                x = torch.concat((x, outputs[CONV_LAYERS-i-2]), dim=1)
+        # Right, up layers
+        for i in range(self.layers-1):
+            x = getattr(self, f"upsamp{i}")(x)
+            x = torch.cat([x, lefts[self.layers-i-2]], dim=1)
+            x = getattr(self, f"up{i}")(x)
 
         x = self.regression(x)
         x = self.sigmoid(x)
-
         return x
