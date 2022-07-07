@@ -81,7 +81,7 @@ class CNNPBRModel(nn.Module):
             conv = ConvUp(real_in_channels, out_channels, alpha)
             setattr(self, f"up{i}", conv)
 
-        self.regression = nn.Conv2d(getattr(self, f"up{layers-2}").out_channels, 1, 1)
+        self.regression = nn.Conv2d(getattr(self, f"up{layers-2}").out_channels, 5, 1)
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):

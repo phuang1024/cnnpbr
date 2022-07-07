@@ -79,11 +79,10 @@ if __name__ == "__main__":
 
     print(f"Using device {DEVICE}")
 
-    model = CNNPBRModel(layers=LAYERS)
+    model = CNNPBRModel(layers=LAYERS).to(DEVICE)
     if args.resume:
         print("Loading model")
         model.load_state_dict(torch.load("model.pth"))
-    model = model.to(DEVICE)
 
     losses = train(args, model)
 
