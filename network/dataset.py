@@ -10,9 +10,7 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from torchvision.io import ImageReadMode, read_image
 
-IMG_SIZE = 256
-
-device = "cuda" if torch.cuda.is_available() else "cpu"
+from constants import *
 
 
 class TextureDataset(Dataset):
@@ -26,7 +24,7 @@ class TextureDataset(Dataset):
         directory = self.dirs[idx]
         color = read_image(os.path.join(directory, "color.jpg"), mode=ImageReadMode.RGB)
         disp = read_image(os.path.join(directory, "disp.jpg"), mode=ImageReadMode.GRAY)
-        color, disp = color.to(device), disp.to(device)
+        color, disp = color.to(DEVICE), disp.to(DEVICE)
         color, disp = color / 255, disp / 255
 
         return color, disp

@@ -3,10 +3,9 @@ import matplotlib.pyplot as plt
 import torch
 from torch.utils.data import DataLoader
 
+from constants import *
 from dataset import TextureDataset
 from network import CNNPBRModel
-
-device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 def test(model):
@@ -17,7 +16,7 @@ def test(model):
     count = 10
     next_i = 0
     for color, disp in dataloader:
-        color, disp = color.to(device), disp.to(device)
+        color, disp = color.to(DEVICE), disp.to(DEVICE)
         pred = model(color) * 255
         color, disp, pred = \
             color.detach().cpu().numpy(), disp.detach().cpu().numpy(), pred.detach().cpu().numpy()
@@ -39,7 +38,7 @@ def test(model):
 
 
 if __name__ == "__main__":
-    model = CNNPBRModel()
+    model = CNNPBRModel(layers=LAYERS)
     model.load_state_dict(torch.load("model.pth"))
-    model = model.to(device)
+    model = model.to(DEVICE)
     test(model)

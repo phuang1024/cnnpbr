@@ -9,15 +9,9 @@ from tqdm import trange
 import torch
 from torch.utils.data import DataLoader, random_split
 
+from constants import *
 from dataset import TextureDataset
 from network import CNNPBRModel
-
-TRAIN_DATA_FACTOR = 0.9
-
-LAYERS = 3
-
-device = "cuda" if torch.cuda.is_available() else "cpu"
-print(f"Using device {device}")
 
 
 def train(args, model):
@@ -26,7 +20,7 @@ def train(args, model):
         f.write(f"Started training at {datetime.now()}\n")
 
     dataset = TextureDataset("../data/data_resized")
-    train_count = int(len(dataset) * TRAIN_DATA_FACTOR)
+    train_count = int(len(dataset) * TRAIN_DATA_SPLIT)
     train_data, test_data = random_split(dataset, [train_count, len(dataset) - train_count])
     train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True)
     test_loader = DataLoader(test_data, batch_size=args.batch_size, shuffle=True)
@@ -76,6 +70,8 @@ if __name__ == "__main__":
     parser.add_argument("--lr", default=1e-3, type=float, help="Learning rate")
     parser.add_argument("--log", default="train.log", help="Path to log file")
     args = parser.parse_args()
+
+    print(f"Using device {DEVICE}")
 
     model = CNNPBRModel(layers=LAYERS)
     if args.resume:
