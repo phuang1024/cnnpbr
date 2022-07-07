@@ -2,6 +2,7 @@ import argparse
 import os
 
 import cv2
+import numpy as np
 from tqdm import tqdm
 
 
@@ -20,9 +21,17 @@ def main():
         os.makedirs(new, exist_ok=True)
         for f in os.listdir(dir):
             if f.endswith(".jpg"):
-                read_mode = cv2.IMREAD_COLOR if "color" in f.lower() or "normal" in f.lower() \
-                    else cv2.IMREAD_GRAYSCALE
-                img = cv2.imread(os.path.join(dir, f), read_mode)
+                img = cv2.imread(os.path.join(dir, f))
+                height, width = img.shape[:2]
+                if width > height:
+                    img = img[:, :height, :]
+                elif height > width:
+                    img = img[:width, :, :]
+
+                color_img = "color" in f.lower() or "normal" in f.lower()
+                if not color_img:
+                    img = np.sum(img, axis=2) / 3
+
                 img = cv2.resize(img, (args.size, args.size))
                 cv2.imwrite(os.path.join(new, f), img)
 
