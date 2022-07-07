@@ -80,7 +80,7 @@ if __name__ == "__main__":
 
     print(f"Using device {DEVICE}")
 
-    model = CNNPBRModel(layers=LAYERS, kernel=5)
+    model = CNNPBRModel(layers=LAYERS)
     if args.resume:
         print("Loading model")
         model.load_state_dict(torch.load("model.pth"))
