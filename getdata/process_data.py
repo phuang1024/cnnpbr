@@ -10,7 +10,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input", type=str, required=True, help="Input directory.")
     parser.add_argument("-o", "--output", type=str, required=True, help="Output directory.")
-    parser.add_argument("-s", "--size", type=int, default=256, help="Output image size.")
+    parser.add_argument("-s", "--size", type=int, default=1024, help="Output image size.")
     args = parser.parse_args()
 
     os.makedirs(args.output, exist_ok=True)

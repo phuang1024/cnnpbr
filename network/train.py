@@ -20,9 +20,8 @@ def train(args, model):
     with open(args.log, "w") as f:
         f.write(f"Started training at {datetime.now()}\n")
 
-    dataset = TextureDataset("../data/data_resized")
-    train_count = int(len(dataset) * TRAIN_DATA_SPLIT)
-    train_data, test_data = random_split(dataset, [train_count, len(dataset) - train_count])
+    train_data = TextureDataset("../data/train_resized")
+    test_data = TextureDataset("../data/test_resized")
     train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True)
     test_loader = DataLoader(test_data, batch_size=args.batch_size, shuffle=True)
     print(f"Training samples: {len(train_loader.dataset)}, "
@@ -72,8 +71,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--resume", action="store_true",
         help="Continue training from a previous model")
-    parser.add_argument("--epochs", default=100, type=int, help="Number of epochs to train")
-    parser.add_argument("--batch-size", default=64, type=int, help="Batch size")
+    parser.add_argument("--epochs", default=10, type=int, help="Number of epochs to train")
+    parser.add_argument("--batch-size", default=4, type=int, help="Batch size")
     parser.add_argument("--lr", default=1e-3, type=float, help="Learning rate")
     parser.add_argument("--log", default="train.log", help="Path to log file")
     args = parser.parse_args()

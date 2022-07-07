@@ -9,7 +9,7 @@ from network import CNNPBRModel
 
 
 def test(model):
-    dataset = TextureDataset("../data/data_resized")
+    dataset = TextureDataset("../data/test_resized")
     dataloader = DataLoader(dataset, batch_size=10)
 
     # Evaluate each image in the dataset and plot test, ground truth, and prediction
