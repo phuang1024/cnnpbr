@@ -22,21 +22,22 @@ class TextureDataset(Dataset):
 
     def __getitem__(self, idx):
         directory = self.dirs[idx]
-        maps = {}
-        for name in ("normal", "disp", "rough"):
-            mode = ImageReadMode.RGB if name == "normal" else ImageReadMode.GRAY
-            img = read_image(os.path.join(directory, f"{name}.jpg"), mode=mode)
-            maps[name] = img
 
-        data = combine_maps(maps)
-        data = data.to(DEVICE)
-        data = data / 255
+        color = self._read_img(directory, "color")
+        normal = self._read_img(directory, "normal")
+        disp = self._read_img(directory, "disp")
+        rough = self._read_img(directory, "rough")
 
-        color = read_image(os.path.join(directory, "color.jpg"), mode=ImageReadMode.RGB)
-        color = color.to(DEVICE)
-        color = color / 255
+        out_data = torch.cat([normal, disp, rough], dim=0)
 
-        return color, data
+        return color, out_data
+
+    @staticmethod
+    def _read_img(dir, path):
+        path = os.path.join(dir, path+".jpg")
+        img = read_image(path).float()
+        img = img / 255.0
+        return img
 
 
 def combine_maps(maps):
@@ -72,4 +73,3 @@ def get_dataloader(directory, batch_size):
     dataset = TextureDataset(directory)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
     return dataloader
-

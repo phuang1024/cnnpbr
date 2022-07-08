@@ -20,10 +20,10 @@ def train(args, model):
     with open(args.log, "w") as f:
         f.write(f"Started training at {datetime.now()}\n")
 
-    train_data = TextureDataset("../data/train_resized")
-    test_data = TextureDataset("../data/test_resized")
-    train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True)
-    test_loader = DataLoader(test_data, batch_size=args.batch_size, shuffle=True)
+    train_data = TextureDataset("../data/train_processed")
+    test_data = TextureDataset("../data/test_processed")
+    train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True, num_workers=8)
+    test_loader = DataLoader(test_data, batch_size=args.batch_size, shuffle=True, num_workers=8)
     print(f"Training samples: {len(train_loader.dataset)}, "
           f"test samples: {len(test_loader.dataset)}")
 
@@ -38,9 +38,11 @@ def train(args, model):
     for epoch in trange(args.epochs, desc="Epoch"):
         # Train model
         model.train()
-        for i, (img, disp) in enumerate(train_loader):
-            pred = model(img)
-            loss = loss_fn(pred, disp)
+        for i, (in_data, truth) in enumerate(train_loader):
+            in_data, truth = in_data.to(DEVICE), truth.to(DEVICE)
+
+            pred = model(in_data)
+            loss = loss_fn(pred, truth)
 
             optim.zero_grad()
             loss.backward()
@@ -58,9 +60,11 @@ def train(args, model):
         # Compute average loss on test dataset
         avg_loss = 0
         model.eval()
-        for img, disp in test_loader:
-            pred = model(img)
-            avg_loss += loss_fn(pred, disp).item()
+        for in_data, truth in test_loader:
+            in_data, truth = in_data.to(DEVICE), truth.to(DEVICE)
+
+            pred = model(in_data)
+            avg_loss += loss_fn(pred, truth).item()
         avg_loss /= len(test_loader)
         losses.append(avg_loss)
 

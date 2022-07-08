@@ -12,12 +12,14 @@ NUM_PER_SHOW = 4
 
 
 def test(model):
-    dataset = TextureDataset("../data/train_resized")
+    dataset = TextureDataset("../data/train_processed")
     dataloader = DataLoader(dataset, batch_size=NUM_PER_SHOW)
 
     # Evaluate each image in the dataset and plot test, ground truth, and prediction
     next_i = 0
     for color, truth in dataloader:
+        color, truth = color.to(DEVICE), truth.to(DEVICE)
+
         pred = model(color)
         color, pred, truth = color.detach().cpu().numpy(), pred.detach().cpu().numpy(), \
                 truth.detach().cpu().numpy()
@@ -48,7 +50,7 @@ def test(model):
                 plt.title(name + "(pred)")
                 plt.axis("off")
 
-    plt.show()
+        plt.show()
 
 
 if __name__ == "__main__":

@@ -81,7 +81,12 @@ class CNNPBRModel(nn.Module):
             conv = ConvUp(real_in_channels, out_channels, alpha)
             setattr(self, f"up{i}", conv)
 
-        self.regression = nn.Conv2d(getattr(self, f"up{layers-2}").out_channels, 5, 1)
+        # Regression (output)
+        in_channels = getattr(self, f"up{layers-2}").out_channels
+        self.reg_normal = nn.Conv2d(in_channels, 3, 1)
+        self.reg_disp = nn.Conv2d(in_channels, 1, 1)
+        self.reg_rough = nn.Conv2d(in_channels, 1, 1)
+
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
@@ -99,6 +104,10 @@ class CNNPBRModel(nn.Module):
             x = torch.cat([x, lefts[self.layers-i-2]], dim=1)
             x = getattr(self, f"up{i}")(x)
 
-        x = self.regression(x)
-        x = self.sigmoid(x)
-        return x
+        normal = self.reg_normal(x)
+        disp = self.reg_disp(x)
+        rough = self.reg_rough(x)
+        final = torch.cat([normal, disp, rough], dim=1)
+
+        final = self.sigmoid(final)
+        return final
