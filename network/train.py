@@ -29,7 +29,7 @@ def train(args, model):
 
     loss_fn = torch.nn.MSELoss()
     optim = torch.optim.Adam(model.parameters(), lr=args.lr)
-    scheduler = ExponentialLR(optim, gamma=0.997)
+    scheduler = ExponentialLR(optim, gamma=0.995)
     print(f"Using loss function {loss_fn}")
     print(f"Using optimizer {optim}")
     print(model)
@@ -49,14 +49,6 @@ def train(args, model):
             optim.step()
         scheduler.step()
 
-        msg = f"Epoch: {epoch}, Loss: {loss:.4f}, LR: {optim.param_groups[0]['lr']:.6f}"
-        with open(args.log, "a") as f:
-            f.write(msg + "\n")
-
-        if epoch % 100 == 0:
-            path = os.path.join("/home/patrick/stuff/cnnpbr", f"model_{epoch}.pth")
-            torch.save(model.state_dict(), path)
-
         # Compute average loss on test dataset
         avg_loss = 0
         model.eval()
@@ -66,6 +58,10 @@ def train(args, model):
             pred = model(in_data)
             avg_loss += loss_fn(pred, truth).item()
         avg_loss /= len(test_loader)
+
+        msg = f"Epoch: {epoch}, Loss: {avg_loss:.4f}, LR: {optim.param_groups[0]['lr']:.6f}"
+        with open(args.log, "a") as f:
+            f.write(msg + "\n")
         losses.append(avg_loss)
 
     return losses
@@ -76,8 +72,8 @@ if __name__ == "__main__":
     parser.add_argument("--resume", action="store_true",
         help="Continue training from a previous model")
     parser.add_argument("--epochs", default=10, type=int, help="Number of epochs to train")
-    parser.add_argument("--batch-size", default=4, type=int, help="Batch size")
-    parser.add_argument("--lr", default=1e-3, type=float, help="Learning rate")
+    parser.add_argument("--batch-size", default=2, type=int, help="Batch size")
+    parser.add_argument("--lr", default=1e-4, type=float, help="Learning rate")
     parser.add_argument("--log", default="train.log", help="Path to log file")
     args = parser.parse_args()
 

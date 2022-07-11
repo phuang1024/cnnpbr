@@ -58,7 +58,7 @@ class CNNPBRModel(nn.Module):
         # Left, down layers
         for i in range(layers):
             in_channels = 3 if i == 0 else getattr(self, f"down{i-1}").out_channels
-            out_channels = 2 ** (i+2)
+            out_channels = 2 ** (i+3)
 
             conv = ConvDown(in_channels, out_channels, alpha)
             setattr(self, f"down{i}", conv)
@@ -83,7 +83,9 @@ class CNNPBRModel(nn.Module):
 
         # Regression (output)
         in_channels = getattr(self, f"up{layers-2}").out_channels
-        self.reg_normal = nn.Conv2d(in_channels, 3, 1)
+        self.reg_nrmr = nn.Conv2d(in_channels, 1, 3)
+        self.reg_nrmg = nn.Conv2d(in_channels, 1, 3)
+        self.reg_nrmb = nn.Conv2d(in_channels, 1, 3)
         self.reg_disp = nn.Conv2d(in_channels, 1, 1)
         self.reg_rough = nn.Conv2d(in_channels, 1, 1)
 
@@ -104,10 +106,12 @@ class CNNPBRModel(nn.Module):
             x = torch.cat([x, lefts[self.layers-i-2]], dim=1)
             x = getattr(self, f"up{i}")(x)
 
-        normal = self.reg_normal(x)
+        nrmr = self.reg_nrmr(x)
+        nrmg = self.reg_nrmg(x)
+        nrmb = self.reg_nrmb(x)
         disp = self.reg_disp(x)
         rough = self.reg_rough(x)
-        final = torch.cat([normal, disp, rough], dim=1)
+        final = torch.cat([nrmr, nrmg, nrmb, disp, rough], dim=1)
 
         final = self.sigmoid(final)
         return final
