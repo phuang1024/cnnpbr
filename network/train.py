@@ -27,8 +27,8 @@ def train(args, model):
     print(f"Training samples: {len(train_loader.dataset)}, "
           f"test samples: {len(test_loader.dataset)}")
 
-    loss_fn = torch.nn.MSELoss(reduction="sum")
-    optim = torch.optim.Adam(model.parameters(), lr=args.lr)
+    loss_fn = torch.nn.L1Loss()
+    optim = torch.optim.Adam(model.parameters(), lr=args.lr, betas=(0.5, 0.999))
     scheduler = ExponentialLR(optim, gamma=0.7)
     print(f"Using loss function {loss_fn}")
     print(f"Using optimizer {optim}")
