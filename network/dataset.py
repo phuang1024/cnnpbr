@@ -1,13 +1,7 @@
 import os
-import random
-
-import cv2
-from tqdm import tqdm
 
 import torch
-import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
-from torchvision import transforms
 from torchvision.io import ImageReadMode, read_image
 
 from constants import *
@@ -15,7 +9,16 @@ from constants import *
 
 class TextureDataset(Dataset):
     def __init__(self, directory):
-        self.dirs = [os.path.join(directory, f) for f in os.listdir(directory)]
+        def validate_dir(dir):
+            if not os.path.isdir(dir):
+                return False
+            for name in ("color", "normal", "disp", "rough"):
+                if not os.path.isfile(os.path.join(dir, name + ".jpg")):
+                    return False
+            return True
+
+        self.dirs = [os.path.join(directory, f) for f in os.listdir(directory)
+            if validate_dir(os.path.join(directory, f))]
 
     def __len__(self):
         return len(self.dirs)
@@ -23,19 +26,24 @@ class TextureDataset(Dataset):
     def __getitem__(self, idx):
         directory = self.dirs[idx]
 
-        color = self._read_img(directory, "color")
-        normal = self._read_img(directory, "normal")
-        disp = self._read_img(directory, "disp")
-        rough = self._read_img(directory, "rough")
+        color = self._read_img(directory, "color", ImageReadMode.RGB)
+        normal = self._read_img(directory, "normal", ImageReadMode.RGB)
+        disp = self._read_img(directory, "disp", ImageReadMode.GRAY)
+        rough = self._read_img(directory, "rough", ImageReadMode.GRAY)
 
         out_data = torch.cat([normal, disp, rough], dim=0)
 
         return color, out_data
 
     @staticmethod
-    def _read_img(dir, path):
+    def _read_img(dir, path, mode):
         path = os.path.join(dir, path+".jpg")
-        img = read_image(path).float()
+        img = read_image(path, mode).float()
+
+        img = img.unsqueeze(0)
+        img = torch.nn.functional.interpolate(img, size=IMG_SIZE, mode="bilinear", align_corners=False)
+        img = img.squeeze(0)
+
         img = img / 255.0
         return img
 

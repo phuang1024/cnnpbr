@@ -1,14 +1,14 @@
 import argparse
 from datetime import datetime
-import os
-import time
 
+import cv2
 import matplotlib.pyplot as plt
+import numpy as np
 from tqdm import trange
 
 import torch
 from torch.optim.lr_scheduler import ExponentialLR
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader
 
 from constants import *
 from dataset import TextureDataset
@@ -20,25 +20,29 @@ def train(args, model):
     with open(args.log, "w") as f:
         f.write(f"Started training at {datetime.now()}\n")
 
-    train_data = TextureDataset("../data/train_processed")
-    test_data = TextureDataset("../data/test_processed")
-    train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True, num_workers=args.data_workers)
-    test_loader = DataLoader(test_data, batch_size=args.batch_size, shuffle=True, num_workers=args.data_workers)
+    train_data = TextureDataset("../data/train_data")
+    test_data = TextureDataset("../data/test_data")
+    kwargs = {"shuffle": True, "batch_size": args.batch_size, "num_workers": DATA_WORKERS}
+    train_loader = DataLoader(train_data, **kwargs)
+    test_loader = DataLoader(test_data, **kwargs)
     print(f"Training samples: {len(train_loader.dataset)}, "
           f"test samples: {len(test_loader.dataset)}")
 
-    loss_fn = torch.nn.L1Loss()
-    optim = torch.optim.Adam(model.parameters(), lr=args.lr, betas=(0.5, 0.999))
-    scheduler = ExponentialLR(optim, gamma=0.7)
+    loss_fn = LOSS()
+    optim = torch.optim.Adam(model.parameters(), lr=LR_INIT, betas=OPTIM_BETAS)
+    scheduler = ExponentialLR(optim, gamma=LR_DECAY)
     print(f"Using loss function {loss_fn}")
     print(f"Using optimizer {optim}")
     print(model)
 
     losses = []
-    for epoch in trange(args.epochs, desc="Epoch"):
+    for epoch in (pbar := trange(args.epochs)):
         # Train model
         model.train()
         for i, (in_data, truth) in enumerate(train_loader):
+            desc = f"epoch {epoch + 1}/{args.epochs}, sample {i + 1}/{len(train_loader)}"
+            pbar.set_description(desc, refresh=True)
+
             in_data, truth = in_data.to(DEVICE), truth.to(DEVICE)
 
             pred = model(in_data)
@@ -73,14 +77,12 @@ if __name__ == "__main__":
         help="Continue training from a previous model")
     parser.add_argument("--epochs", default=10, type=int, help="Number of epochs to train")
     parser.add_argument("--batch-size", default=2, type=int, help="Batch size")
-    parser.add_argument("--data-workers", default=8, type=int, help="Number of data workers")
-    parser.add_argument("--lr", default=1e-2, type=float, help="Learning rate")
     parser.add_argument("--log", default="train.log", help="Path to log file")
     args = parser.parse_args()
 
     print(f"Using device {DEVICE}")
 
-    model = CNNPBRModel(layers=LAYERS).to(DEVICE)
+    model = CNNPBRModel().to(DEVICE)
     if args.resume:
         print("Loading model")
         model.load_state_dict(torch.load("model.pth"))

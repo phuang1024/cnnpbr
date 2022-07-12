@@ -12,7 +12,7 @@ NUM_PER_SHOW = 4
 
 
 def test(model):
-    dataset = TextureDataset("../data/train_processed")
+    dataset = TextureDataset("../data/test_data")
     dataloader = DataLoader(dataset, batch_size=NUM_PER_SHOW)
 
     # Evaluate each image in the dataset and plot test, ground truth, and prediction
@@ -54,6 +54,6 @@ def test(model):
 
 
 if __name__ == "__main__":
-    model = CNNPBRModel(layers=LAYERS).to(DEVICE)
+    model = CNNPBRModel().to(DEVICE)
     model.load_state_dict(torch.load("model.pth"))
     test(model)
