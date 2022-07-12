@@ -1,7 +1,10 @@
 import os
 
+import cv2
+
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
+from torchvision import transforms
 from torchvision.io import ImageReadMode, read_image
 
 from constants import *
@@ -20,31 +23,39 @@ class TextureDataset(Dataset):
         self.dirs = [os.path.join(directory, f) for f in os.listdir(directory)
             if validate_dir(os.path.join(directory, f))]
 
+        self.col_trans = torch.nn.Sequential(
+            transforms.Resize(IMG_SIZE),
+            transforms.CenterCrop((IMG_SIZE, IMG_SIZE)),
+            transforms.Normalize([0, 0, 0], [255, 255, 255]),
+        ).to(DEVICE)
+        self.gray_trans = torch.nn.Sequential(
+            self.col_trans,
+            transforms.Grayscale(),
+        ).to(DEVICE)
+
     def __len__(self):
         return len(self.dirs)
 
     def __getitem__(self, idx):
         directory = self.dirs[idx]
 
-        color = self._read_img(directory, "color", ImageReadMode.RGB)
-        normal = self._read_img(directory, "normal", ImageReadMode.RGB)
-        disp = self._read_img(directory, "disp", ImageReadMode.GRAY)
-        rough = self._read_img(directory, "rough", ImageReadMode.GRAY)
+        color = self._read_img(directory, "color", True)
+        normal = self._read_img(directory, "normal", True)
+        disp = self._read_img(directory, "disp", False)
+        rough = self._read_img(directory, "rough", False)
 
         out_data = torch.cat([normal, disp, rough], dim=0)
 
         return color, out_data
 
-    @staticmethod
-    def _read_img(dir, path, mode):
+    def _read_img(self, dir, path, color: bool):
         path = os.path.join(dir, path+".jpg")
-        img = read_image(path, mode).float()
+        img = read_image(path, ImageReadMode.RGB).to(DEVICE).float()
+        if color:
+            img = self.col_trans(img)
+        else:
+            img = self.gray_trans(img)
 
-        img = img.unsqueeze(0)
-        img = torch.nn.functional.interpolate(img, size=IMG_SIZE, mode="bilinear", align_corners=False)
-        img = img.squeeze(0)
-
-        img = img / 255.0
         return img
 
 
@@ -75,9 +86,3 @@ def extract_maps(data):
         maps[name] = maps[name] * 255
 
     return maps
-
-
-def get_dataloader(directory, batch_size):
-    dataset = TextureDataset(directory)
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
-    return dataloader

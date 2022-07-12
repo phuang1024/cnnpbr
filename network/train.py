@@ -4,7 +4,7 @@ from datetime import datetime
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
-from tqdm import trange
+from tqdm import tqdm, trange
 
 import torch
 from torch.optim.lr_scheduler import ExponentialLR
@@ -16,6 +16,8 @@ from network import CNNPBRModel
 
 
 def train(args, model):
+    torch.multiprocessing.set_start_method("spawn")
+
     print("Batch size:", args.batch_size)
     with open(args.log, "w") as f:
         f.write(f"Started training at {datetime.now()}\n")
@@ -39,13 +41,10 @@ def train(args, model):
     print(model)
 
     losses = []
-    for epoch in (pbar := trange(args.epochs)):
+    for epoch in range(args.epochs):
         # Train model
         model.train()
-        for i, (in_data, truth) in enumerate(train_loader):
-            desc = f"epoch {epoch + 1}/{args.epochs}, batch {i + 1}/{len(train_loader)}"
-            pbar.set_description(desc, refresh=True)
-
+        for i, (in_data, truth) in tqdm(enumerate(train_loader), total=len(train_loader), desc=f"Epoch {epoch + 1}"):
             in_data, truth = in_data.to(DEVICE), truth.to(DEVICE)
 
             pred = model(in_data)

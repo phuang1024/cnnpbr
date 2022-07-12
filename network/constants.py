@@ -3,7 +3,7 @@ import torch
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 IMG_SIZE = 512
-DATA_WORKERS = 16
+DATA_WORKERS = 4
 LAYERS = 3
 KERNEL_SIZE = 3
 CHANNELS_EXP = 2
