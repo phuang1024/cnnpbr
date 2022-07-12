@@ -43,7 +43,7 @@ def train(args, model):
         # Train model
         model.train()
         for i, (in_data, truth) in enumerate(train_loader):
-            desc = f"epoch {epoch + 1}/{args.epochs}, sample {i + 1}/{len(train_loader)}"
+            desc = f"epoch {epoch + 1}/{args.epochs}, batch {i + 1}/{len(train_loader)}"
             pbar.set_description(desc, refresh=True)
 
             in_data, truth = in_data.to(DEVICE), truth.to(DEVICE)
