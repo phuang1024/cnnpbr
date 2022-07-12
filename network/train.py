@@ -45,6 +45,13 @@ def train(args, model):
         # Train model
         model.train()
         for i, (in_data, truth) in tqdm(enumerate(train_loader), total=len(train_loader), desc=f"Epoch {epoch + 1}"):
+            """
+            img = in_data[0].detach().cpu().numpy().transpose(1, 2, 0)
+            img = (img*255).astype(np.uint8)
+            cv2.imwrite("a.png", img)
+            stop
+            """
+
             in_data, truth = in_data.to(DEVICE), truth.to(DEVICE)
 
             pred = model(in_data)

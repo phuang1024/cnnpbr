@@ -1,4 +1,5 @@
 import os
+import random
 
 import cv2
 
@@ -8,6 +9,22 @@ from torchvision import transforms
 from torchvision.io import ImageReadMode, read_image
 
 from constants import *
+
+
+class RandomRot90x(torch.nn.Module):
+    """
+    Randomly rotate 90x with equal probabilities.
+    """
+
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, img):
+        """
+        :param img: torch.Tensor
+        :return: torch.Tensor
+        """
+        return torch.rot90(img, random.randint(0, 3))
 
 
 class TextureDataset(Dataset):
@@ -23,14 +40,12 @@ class TextureDataset(Dataset):
         self.dirs = [os.path.join(directory, f) for f in os.listdir(directory)
             if validate_dir(os.path.join(directory, f))]
 
-        self.col_trans = torch.nn.Sequential(
+        self.all_trans = torch.nn.Sequential(
             transforms.Resize(IMG_SIZE),
             transforms.CenterCrop((IMG_SIZE, IMG_SIZE)),
-            transforms.Normalize([0, 0, 0], [255, 255, 255]),
-        ).to(DEVICE)
-        self.gray_trans = torch.nn.Sequential(
-            self.col_trans,
-            transforms.Grayscale(),
+            transforms.Normalize(0, 255),
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomVerticalFlip(),
         ).to(DEVICE)
 
     def __len__(self):
@@ -39,23 +54,22 @@ class TextureDataset(Dataset):
     def __getitem__(self, idx):
         directory = self.dirs[idx]
 
-        color = self._read_img(directory, "color", True)
-        normal = self._read_img(directory, "normal", True)
-        disp = self._read_img(directory, "disp", False)
-        rough = self._read_img(directory, "rough", False)
+        color = self._read_img(directory, "color")
+        normal = self._read_img(directory, "normal")
+        disp = self._read_img(directory, "disp")
+        rough = self._read_img(directory, "rough")
 
-        out_data = torch.cat([normal, disp, rough], dim=0)
+        all_data = torch.cat([color, normal, disp, rough], dim=0).to(DEVICE)
+        all_data = self.all_trans(all_data)
+        in_data = all_data[:3, ...]
+        out_data = all_data[3:, ...]
 
-        return color, out_data
+        return in_data, out_data
 
-    def _read_img(self, dir, path, color: bool):
-        path = os.path.join(dir, path+".jpg")
-        img = read_image(path, ImageReadMode.RGB).to(DEVICE).float()
-        if color:
-            img = self.col_trans(img)
-        else:
-            img = self.gray_trans(img)
-
+    def _read_img(self, dir, name):
+        path = os.path.join(dir, name+".jpg")
+        mode = ImageReadMode.RGB if name in ("color", "normal") else ImageReadMode.GRAY
+        img = read_image(path, mode).float()
         return img
 
 
