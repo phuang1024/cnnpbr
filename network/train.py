@@ -31,6 +31,9 @@ def train(args, model):
     loss_fn = LOSS()
     optim = torch.optim.Adam(model.parameters(), lr=LR_INIT, betas=OPTIM_BETAS)
     scheduler = ExponentialLR(optim, gamma=LR_DECAY)
+    for _ in range(args.start_epoch):
+        scheduler.step()
+
     print(f"Using loss function {loss_fn}")
     print(f"Using optimizer {optim}")
     print(model)
@@ -73,10 +76,10 @@ def train(args, model):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--resume", action="store_true",
-        help="Continue training from a previous model")
+    parser.add_argument("--resume", action="store_true", help="Continue training from a previous model")
+    parser.add_argument("--start-epoch", type=int, default=0, help="If resuming, how many epochs already done?")
     parser.add_argument("--epochs", default=10, type=int, help="Number of epochs to train")
-    parser.add_argument("--batch-size", default=2, type=int, help="Batch size")
+    parser.add_argument("--batch-size", default=4, type=int, help="Batch size")
     parser.add_argument("--log", default="train.log", help="Path to log file")
     args = parser.parse_args()
 
