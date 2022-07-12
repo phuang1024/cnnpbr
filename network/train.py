@@ -24,17 +24,16 @@ def train(args, model):
 
     train_data = TextureDataset("../data/train_data")
     test_data = TextureDataset("../data/test_data")
-    kwargs = {"shuffle": True, "batch_size": args.batch_size, "num_workers": DATA_WORKERS}
+    kwargs = {"shuffle": True, "batch_size": args.batch_size, "num_workers": args.data_workers}
     train_loader = DataLoader(train_data, **kwargs)
     test_loader = DataLoader(test_data, **kwargs)
     print(f"Training samples: {len(train_loader.dataset)}, "
           f"test samples: {len(test_loader.dataset)}")
 
     loss_fn = LOSS()
-    optim = torch.optim.Adam(model.parameters(), lr=LR_INIT, betas=OPTIM_BETAS)
+    lr = LR_INIT * LR_DECAY ** args.start_epoch
+    optim = torch.optim.Adam(model.parameters(), lr=lr, betas=OPTIM_BETAS)
     scheduler = ExponentialLR(optim, gamma=LR_DECAY)
-    for _ in range(args.start_epoch):
-        scheduler.step()
 
     print(f"Using loss function {loss_fn}")
     print(f"Using optimizer {optim}")
@@ -86,6 +85,7 @@ if __name__ == "__main__":
     parser.add_argument("--start-epoch", type=int, default=0, help="If resuming, how many epochs already done?")
     parser.add_argument("--epochs", default=10, type=int, help="Number of epochs to train")
     parser.add_argument("--batch-size", default=4, type=int, help="Batch size")
+    parser.add_argument("--data-workers", default=0, type=int, help="Number of data workers")
     parser.add_argument("--log", default="train.log", help="Path to log file")
     args = parser.parse_args()
 

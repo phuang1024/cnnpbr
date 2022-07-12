@@ -41,11 +41,11 @@ class TextureDataset(Dataset):
             if validate_dir(os.path.join(directory, f))]
 
         self.all_trans = torch.nn.Sequential(
-            transforms.Resize(IMG_SIZE),
-            transforms.CenterCrop((IMG_SIZE, IMG_SIZE)),
             transforms.Normalize(0, 255),
             transforms.RandomHorizontalFlip(),
             transforms.RandomVerticalFlip(),
+            transforms.Resize(IMG_SIZE),
+            transforms.CenterCrop((IMG_SIZE, IMG_SIZE)),
         ).to(DEVICE)
 
     def __len__(self):
@@ -60,6 +60,7 @@ class TextureDataset(Dataset):
         rough = self._read_img(directory, "rough")
 
         all_data = torch.cat([color, normal, disp, rough], dim=0).to(DEVICE)
+        all_data = all_data.float()
         all_data = self.all_trans(all_data)
         in_data = all_data[:3, ...]
         out_data = all_data[3:, ...]
@@ -69,7 +70,7 @@ class TextureDataset(Dataset):
     def _read_img(self, dir, name):
         path = os.path.join(dir, name+".jpg")
         mode = ImageReadMode.RGB if name in ("color", "normal") else ImageReadMode.GRAY
-        img = read_image(path, mode).float()
+        img = read_image(path, mode)
         return img
 
 
