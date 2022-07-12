@@ -22,14 +22,14 @@ def train(args, model):
 
     train_data = TextureDataset("../data/train_processed")
     test_data = TextureDataset("../data/test_processed")
-    train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True, num_workers=8)
-    test_loader = DataLoader(test_data, batch_size=args.batch_size, shuffle=True, num_workers=8)
+    train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True, num_workers=args.data_workers)
+    test_loader = DataLoader(test_data, batch_size=args.batch_size, shuffle=True, num_workers=args.data_workers)
     print(f"Training samples: {len(train_loader.dataset)}, "
           f"test samples: {len(test_loader.dataset)}")
 
-    loss_fn = torch.nn.MSELoss()
+    loss_fn = torch.nn.MSELoss(reduction="sum")
     optim = torch.optim.Adam(model.parameters(), lr=args.lr)
-    scheduler = ExponentialLR(optim, gamma=0.995)
+    scheduler = ExponentialLR(optim, gamma=0.7)
     print(f"Using loss function {loss_fn}")
     print(f"Using optimizer {optim}")
     print(model)
@@ -59,7 +59,7 @@ def train(args, model):
             avg_loss += loss_fn(pred, truth).item()
         avg_loss /= len(test_loader)
 
-        msg = f"Epoch: {epoch}, Loss: {avg_loss:.4f}, LR: {optim.param_groups[0]['lr']:.6f}"
+        msg = f"Epoch: {epoch}, Loss: {avg_loss:.4f}, LR: {optim.param_groups[0]['lr']:.2e}"
         with open(args.log, "a") as f:
             f.write(msg + "\n")
         losses.append(avg_loss)
@@ -73,7 +73,8 @@ if __name__ == "__main__":
         help="Continue training from a previous model")
     parser.add_argument("--epochs", default=10, type=int, help="Number of epochs to train")
     parser.add_argument("--batch-size", default=2, type=int, help="Batch size")
-    parser.add_argument("--lr", default=1e-4, type=float, help="Learning rate")
+    parser.add_argument("--data-workers", default=8, type=int, help="Number of data workers")
+    parser.add_argument("--lr", default=1e-2, type=float, help="Learning rate")
     parser.add_argument("--log", default="train.log", help="Path to log file")
     args = parser.parse_args()
 
