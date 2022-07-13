@@ -32,7 +32,7 @@ def train(args, model):
 
     loss_fn = LOSS()
     lr = LR_INIT * LR_DECAY ** args.start_epoch
-    optim = torch.optim.Adam(model.parameters(), lr=lr, betas=OPTIM_BETAS)
+    optim = torch.optim.Adam(model.parameters(), lr=lr, betas=ADAM_BETAS)
     scheduler = ExponentialLR(optim, gamma=LR_DECAY)
 
     print(f"Using loss function {loss_fn}")
@@ -50,7 +50,6 @@ def train(args, model):
             cv2.imwrite("a.png", img)
             stop
             """
-
             in_data, truth = in_data.to(DEVICE), truth.to(DEVICE)
 
             pred = model(in_data)
