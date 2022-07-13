@@ -9,11 +9,11 @@ class ConvDown(nn.Module):
     2x (conv, batchnorm, leakyrelu)
     """
 
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels, kernel_size):
         super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
-        self.conv = nn.Conv2d(in_channels, out_channels, KERNEL_SIZE, padding=(KERNEL_SIZE-1)//2)
+        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, padding=(kernel_size-1)//2)
         self.bn = nn.BatchNorm2d(out_channels)
         self.lrelu = nn.LeakyReLU(LRELU_ALPHA)
 
@@ -29,11 +29,11 @@ class ConvUp(nn.Module):
     conv transpose, batchnorm, leakyrelu
     """
 
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels, kernel_size):
         super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
-        self.conv = nn.ConvTranspose2d(in_channels, out_channels, KERNEL_SIZE, padding=(KERNEL_SIZE-1)//2)
+        self.conv = nn.ConvTranspose2d(in_channels, out_channels, kernel_size, padding=(kernel_size-1)//2)
         self.bn = nn.BatchNorm2d(out_channels)
         self.lrelu = nn.LeakyReLU(LRELU_ALPHA)
 
@@ -57,7 +57,7 @@ class CNNPBRModel(nn.Module):
             in_channels = 3 if i == 0 else getattr(self, f"down{i-1}").out_channels
             out_channels = 2 ** (i+CHANNELS_EXP)
 
-            conv = ConvDown(in_channels, out_channels)
+            conv = ConvDown(in_channels, out_channels, KERNEL_SIZES[i])
             setattr(self, f"down{i}", conv)
 
             if i != LAYERS-1:
@@ -75,7 +75,7 @@ class CNNPBRModel(nn.Module):
             # Concatenates upsamp with corresponding down layer
             real_in_channels = getattr(self, f"down{LAYERS-i-2}").out_channels + in_channels
             out_channels = real_in_channels // 2
-            conv = ConvUp(real_in_channels, out_channels)
+            conv = ConvUp(real_in_channels, out_channels, KERNEL_SIZES[-i-2])
             setattr(self, f"up{i}", conv)
 
         # Regression (output)
