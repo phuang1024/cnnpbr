@@ -13,7 +13,7 @@ class ConvDown(nn.Module):
         super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
-        self.conv = nn.Conv2d(in_channels, out_channels, KERNEL_SIZE, padding=1)
+        self.conv = nn.Conv2d(in_channels, out_channels, KERNEL_SIZE, padding=(KERNEL_SIZE-1)//2)
         self.bn = nn.BatchNorm2d(out_channels)
         self.lrelu = nn.LeakyReLU(LRELU_ALPHA)
 
@@ -33,7 +33,7 @@ class ConvUp(nn.Module):
         super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
-        self.conv = nn.ConvTranspose2d(in_channels, out_channels, KERNEL_SIZE, padding=1)
+        self.conv = nn.ConvTranspose2d(in_channels, out_channels, KERNEL_SIZE, padding=(KERNEL_SIZE-1)//2)
         self.bn = nn.BatchNorm2d(out_channels)
         self.lrelu = nn.LeakyReLU(LRELU_ALPHA)
 
