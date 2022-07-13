@@ -7,6 +7,7 @@ LAYERS = 3
 KERNEL_SIZES = [3, 5, 5]
 CHANNELS_EXP = 2
 LRELU_ALPHA = 0.2
+POOLING = torch.nn.MaxPool2d
 LR_INIT = 1e-3
 LR_DECAY = 0.95
 LOSS = torch.nn.L1Loss

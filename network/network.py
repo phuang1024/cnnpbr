@@ -61,8 +61,8 @@ class CNNPBRModel(nn.Module):
             setattr(self, f"down{i}", conv)
 
             if i != LAYERS-1:
-                maxpool = nn.MaxPool2d(2)
-                setattr(self, f"maxpool{i}", maxpool)
+                maxpool = POOLING(2)
+                setattr(self, f"pooling{i}", maxpool)
 
         # Right, up layers
         for i in range(LAYERS-1):
@@ -95,7 +95,7 @@ class CNNPBRModel(nn.Module):
             x = getattr(self, f"down{i}")(x)
             lefts.append(x)
             if i != LAYERS-1:
-                x = getattr(self, f"maxpool{i}")(x)
+                x = getattr(self, f"pooling{i}")(x)
 
         # Right, up layers
         for i in range(LAYERS-1):
