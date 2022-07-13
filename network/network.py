@@ -80,6 +80,8 @@ class CNNPBRModel(nn.Module):
 
         # Regression (output)
         in_channels = getattr(self, f"up{LAYERS-2}").out_channels
+        in_channels += 3   # Concatenate with input
+
         self.reg_nrmr = nn.Conv2d(in_channels, 1, 3, padding=1)
         self.reg_nrmg = nn.Conv2d(in_channels, 1, 3, padding=1)
         self.reg_nrmb = nn.Conv2d(in_channels, 1, 3, padding=1)
@@ -89,6 +91,8 @@ class CNNPBRModel(nn.Module):
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
+        original = x
+
         # Left, down layers
         lefts = []
         for i in range(LAYERS):
@@ -102,6 +106,7 @@ class CNNPBRModel(nn.Module):
             x = getattr(self, f"upsamp{i}")(x)
             x = torch.cat([x, lefts[LAYERS-i-2]], dim=1)
             x = getattr(self, f"up{i}")(x)
+        x = torch.cat([x, original], dim=1)
 
         nrmr = self.reg_nrmr(x)
         nrmg = self.reg_nrmg(x)
