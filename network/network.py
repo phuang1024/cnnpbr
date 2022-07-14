@@ -18,13 +18,13 @@ class ConvDown(nn.Module):
         self.one = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, kernel_size, padding=padding),
             nn.BatchNorm2d(out_channels),
-            nn.LeakyReLU(LRELU_ALPHA),
+            nn.ELU(LU_ALPHA),
         )
 
         self.two = nn.Sequential(
             nn.Conv2d(out_channels, out_channels, kernel_size, padding=padding),
             nn.BatchNorm2d(out_channels),
-            nn.LeakyReLU(LRELU_ALPHA),
+            nn.ELU(LU_ALPHA),
         )
 
     def forward(self, x):
@@ -47,13 +47,13 @@ class ConvUp(nn.Module):
         self.one = nn.Sequential(
             nn.ConvTranspose2d(in_channels, out_channels, kernel_size, padding=padding),
             nn.BatchNorm2d(out_channels),
-            nn.LeakyReLU(LRELU_ALPHA),
+            nn.ELU(LU_ALPHA),
         )
 
         self.two = nn.Sequential(
             nn.ConvTranspose2d(out_channels, out_channels, kernel_size, padding=padding),
             nn.BatchNorm2d(out_channels),
-            nn.LeakyReLU(LRELU_ALPHA),
+            nn.ELU(LU_ALPHA),
         )
 
     def forward(self, x):
@@ -106,7 +106,7 @@ class CNNPBRModel(nn.Module):
         self.reg_disp = nn.Conv2d(in_channels, 1, 1)
         self.reg_rough = nn.Conv2d(in_channels, 1, 1)
 
-        #self.sigmoid = nn.Sigmoid()
+        self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
         original = x
@@ -133,5 +133,5 @@ class CNNPBRModel(nn.Module):
         rough = self.reg_rough(x)
         final = torch.cat([nrmr, nrmg, nrmb, disp, rough], dim=1)
 
-        #final = self.sigmoid(final)
+        final = self.sigmoid(final)
         return final
