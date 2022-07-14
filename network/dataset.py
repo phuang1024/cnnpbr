@@ -46,7 +46,7 @@ class TextureDataset(Dataset):
             transforms.RandomVerticalFlip(),
             transforms.Resize(IMG_SIZE),
             transforms.CenterCrop((IMG_SIZE, IMG_SIZE)),
-        ).to(DEVICE)
+        )
 
     def __len__(self):
         return len(self.dirs)
