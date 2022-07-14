@@ -24,7 +24,8 @@ def train(args, model):
 
     train_data = TextureDataset("../data/train_data")
     test_data = TextureDataset("../data/test_data")
-    kwargs = {"shuffle": True, "batch_size": args.batch_size, "num_workers": args.data_workers, "prefetch_factor": args.prefetch_factor}
+    kwargs = {"shuffle": True, "batch_size": args.batch_size, "num_workers": args.data_workers,
+            "pin_memory": True, "prefetch_factor": args.prefetch_factor}
     train_loader = DataLoader(train_data, **kwargs)
     test_loader = DataLoader(test_data, **kwargs)
     print(f"Training samples: {len(train_loader.dataset)}, "
