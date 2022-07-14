@@ -13,34 +13,52 @@ class ConvDown(nn.Module):
         super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
-        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, padding=(kernel_size-1)//2)
-        self.bn = nn.BatchNorm2d(out_channels)
-        self.lrelu = nn.LeakyReLU(LRELU_ALPHA)
+
+        padding = kernel_size // 2
+        self.one = nn.Sequential(
+            nn.Conv2d(in_channels, out_channels, kernel_size, padding=padding),
+            nn.BatchNorm2d(out_channels),
+            nn.LeakyReLU(LRELU_ALPHA),
+        )
+
+        self.two = nn.Sequential(
+            nn.Conv2d(out_channels, out_channels, kernel_size, padding=padding),
+            nn.BatchNorm2d(out_channels),
+            nn.LeakyReLU(LRELU_ALPHA),
+        )
 
     def forward(self, x):
-        x = self.conv(x)
-        x = self.bn(x)
-        x = self.lrelu(x)
+        x = self.one(x)
+        x = self.two(x)
         return x
 
 
 class ConvUp(nn.Module):
     """
-    conv transpose, batchnorm, leakyrelu
+    2x (conv transpose, batchnorm, leakyrelu)
     """
 
     def __init__(self, in_channels, out_channels, kernel_size):
         super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
-        self.conv = nn.ConvTranspose2d(in_channels, out_channels, kernel_size, padding=(kernel_size-1)//2)
-        self.bn = nn.BatchNorm2d(out_channels)
-        self.lrelu = nn.LeakyReLU(LRELU_ALPHA)
+
+        padding = kernel_size // 2
+        self.one = nn.Sequential(
+            nn.ConvTranspose2d(in_channels, out_channels, kernel_size, padding=padding),
+            nn.BatchNorm2d(out_channels),
+            nn.LeakyReLU(LRELU_ALPHA),
+        )
+
+        self.two = nn.Sequential(
+            nn.ConvTranspose2d(out_channels, out_channels, kernel_size, padding=padding),
+            nn.BatchNorm2d(out_channels),
+            nn.LeakyReLU(LRELU_ALPHA),
+        )
 
     def forward(self, x):
-        x = self.conv(x)
-        x = self.bn(x)
-        x = self.lrelu(x)
+        x = self.one(x)
+        x = self.two(x)
         return x
 
 
