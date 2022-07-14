@@ -24,7 +24,7 @@ def train(args, model):
 
     train_data = TextureDataset("../data/train_data")
     test_data = TextureDataset("../data/test_data")
-    kwargs = {"shuffle": True, "batch_size": args.batch_size, "num_workers": args.data_workers}
+    kwargs = {"shuffle": True, "batch_size": args.batch_size, "num_workers": args.data_workers, "prefetch_factor": args.prefetch_factor}
     train_loader = DataLoader(train_data, **kwargs)
     test_loader = DataLoader(test_data, **kwargs)
     print(f"Training samples: {len(train_loader.dataset)}, "
@@ -85,6 +85,7 @@ if __name__ == "__main__":
     parser.add_argument("--epochs", default=10, type=int, help="Number of epochs to train")
     parser.add_argument("--batch-size", default=4, type=int, help="Batch size")
     parser.add_argument("--data-workers", default=0, type=int, help="Number of data workers")
+    parser.add_argument("--prefetch-factor", default=2, type=int, help="Prefetch factor.")
     parser.add_argument("--log", default="train.log", help="Path to log file")
     args = parser.parse_args()
 

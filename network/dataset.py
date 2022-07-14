@@ -59,7 +59,7 @@ class TextureDataset(Dataset):
         disp = self._read_img(directory, "disp")
         rough = self._read_img(directory, "rough")
 
-        all_data = torch.cat([color, normal, disp, rough], dim=0).to(DEVICE)
+        all_data = torch.cat([color, normal, disp, rough], dim=0)
         all_data = all_data.float()
         all_data = self.all_trans(all_data)
         in_data = all_data[:3, ...]
