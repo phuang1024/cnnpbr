@@ -4,7 +4,7 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 IMG_SIZE = 512
 LAYERS = 3
-KERNEL_SIZES = [3, 5, 5]
+KERNEL_SIZES = [1, 3, 3]
 CHANNELS_EXP = 2
 LRELU_ALPHA = 0.2
 POOLING = torch.nn.MaxPool2d
