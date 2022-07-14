@@ -106,7 +106,7 @@ class CNNPBRModel(nn.Module):
         self.reg_disp = nn.Conv2d(in_channels, 1, 1)
         self.reg_rough = nn.Conv2d(in_channels, 1, 1)
 
-        self.sigmoid = nn.Sigmoid()
+        #self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
         original = x
@@ -133,5 +133,5 @@ class CNNPBRModel(nn.Module):
         rough = self.reg_rough(x)
         final = torch.cat([nrmr, nrmg, nrmb, disp, rough], dim=1)
 
-        final = self.sigmoid(final)
+        #final = self.sigmoid(final)
         return final
