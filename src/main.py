@@ -2,6 +2,7 @@ import argparse
 from pathlib import Path
 
 from getdata import getdata
+from results import show_results
 from train import train_model
 
 
@@ -25,6 +26,10 @@ def get_args():
     trainp.add_argument("--data-workers", type=int, default=8, help="Number of data workers.")
     trainp.add_argument("--logfile", type=Path, default="train.log", help="Path to log file.")
 
+    resultsp = subp.add_parser("results", help="Generate results.")
+    resultsp.add_argument("--session", type=int, required=True, help="Session number.")
+    resultsp.add_argument("--epoch", type=int, required=True, help="Epoch number.")
+
     args = parser.parse_args()
     return args
 
@@ -41,6 +46,9 @@ def main():
 
     elif args.action == "train":
         train_model(args)
+
+    elif args.action == "results":
+        show_results(args)
 
 
 if __name__ == "__main__":
