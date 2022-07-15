@@ -2,6 +2,7 @@ import argparse
 from pathlib import Path
 
 from getdata import getdata
+from train import train_model
 
 
 def get_args():
@@ -17,6 +18,8 @@ def get_args():
     datap.add_argument("--split", type=float, default=0.9, help="Train/test split.")
     datap.add_argument("--category", type=str, required=True, help="Category and label.")
 
+    trainp = subp.add_parser("train", help="Train a model.")
+
     args = parser.parse_args()
     return args
 
@@ -30,6 +33,9 @@ def main():
 
     elif args.action == "data":
         getdata(args)
+
+    elif args.action == "train":
+        train_model(args)
 
 
 if __name__ == "__main__":
