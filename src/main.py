@@ -19,6 +19,10 @@ def get_args():
     datap.add_argument("--category", type=str, required=True, help="Category and label.")
 
     trainp = subp.add_parser("train", help="Train a model.")
+    trainp.add_argument("--epochs", type=int, default=10, help="Number of epochs to train.")
+    trainp.add_argument("--batch-size", type=int, default=4, help="Batch size.")
+    trainp.add_argument("--lr", type=float, default=1e-3, help="Learning rate.")
+    trainp.add_argument("--data-workers", type=int, default=4, help="Number of data workers.")
 
     args = parser.parse_args()
     return args

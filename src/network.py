@@ -1,6 +1,8 @@
 import torch
 from torch import nn
 
+from constants import *
+
 
 class NxConv(nn.Module):
     """

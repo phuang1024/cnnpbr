@@ -1,6 +1,11 @@
+# Global params
+IMG_SIZE = 1024
+
+# Data augmentation
 AUG_JITTER = (0.1, 0, 0.1, 0.05)
 AUG_SHARP = 1
-IMG_SIZE = 1024
+
+# Network params
 NET_CLASS_LAYERS = 4
 NET_CONV_LAYER_COUNT = 2
 NET_CONV_KERNEL_SIZE = 3
