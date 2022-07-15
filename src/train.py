@@ -61,7 +61,7 @@ def train_model(args):
         f.write(f"Batch size: {args.batch_size}\n")
         f.write(f"Learning rate: {args.lr}\n")
         f.write(f"Epochs: {args.epochs}\n\n")
-        f.write(f"Train progress:")
+        f.write(f"Train progress:\n")
     with (session_path/"model.txt").open("w") as f:
         f.write(str(model))
     with (session_path/"commit.txt").open("w") as f:
@@ -69,9 +69,7 @@ def train_model(args):
         f.write(commit + "\n")
     shutil.copyfile(ROOT/"constants.py", session_path/"constants.py")
 
-    for epoch in (pbar := trange(args.epochs)):
-        pbar.set_description("Training", refresh=True)
-
+    for epoch in (pbar := trange(args.epochs, desc="Training")):
         avg_loss = 0.0
         for i, (x, y) in enumerate(dataloader):
             msg = f"epoch {epoch + 1}/{args.epochs}, batch {i + 1}/{len(dataloader)}"
@@ -93,7 +91,8 @@ def train_model(args):
         losses.append(avg_loss)
         with log_path.open("a") as f:
             f.write(f"epoch {epoch + 1}/{args.epochs}, avg_loss: {avg_loss}\n")
-        save_path = session_path / f"epoch_{epoch + 1}.pt"
+        save_path = session_path / "models" / f"epoch_{epoch + 1}.pt"
+        save_path.parent.mkdir(parents=True, exist_ok=True)
         torch.save(model.state_dict(), save_path)
 
     plt.plot(losses)
