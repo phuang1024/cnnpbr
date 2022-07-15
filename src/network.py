@@ -55,6 +55,7 @@ class Network(nn.Module):
                 self.add_module(f"upsamp{layer}", upsamp)
 
         self.regression = NxConv(NET_CONV_CHANNELS*NET_LAYERS, 1, NET_CONV_LAYERS, NET_CONV_KERNEL)
+        self.tanh = nn.Tanh()
 
     def forward(self, x):
         outputs = []
@@ -70,4 +71,5 @@ class Network(nn.Module):
 
         data = torch.cat(outputs, 1)
         data = self.regression(data)
+        data = self.tanh(data)
         return data
