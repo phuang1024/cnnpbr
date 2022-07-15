@@ -4,7 +4,7 @@ import torch
 from torch import nn
 from torch.utils.data import Dataset
 from torchvision import transforms
-from torchvision.io import read_image
+from torchvision.io import read_image, ImageReadMode
 
 from constants import *
 
@@ -26,16 +26,20 @@ class Augmentation(nn.Module):
             transforms.RandomHorizontalFlip(),
         )
 
+        """
         self.color = nn.Sequential(
             transforms.ColorJitter(*AUG_JITTER),
             transforms.RandomAdjustSharpness(AUG_SHARP),
         )
+        """
 
     def forward(self, x):
         x = self.transforms(x)
+        """
         color = x[:3]
         color = self.color(color)
         x[:3] = color
+        """
         return x
 
 
@@ -74,9 +78,19 @@ class TextureDataset(Dataset):
         directory = self.dirs[idx]
 
         color = directory / "color.png"
-        img = read_image(str(color)).float()
+        color = read_image(str(color)).float()
 
         if self.output_labels:
-            img = self.augmentation(img)
+            color = self.augmentation(color)
             label = self.labels.index(directory.parent.name)
-            return img, label
+            return color, label
+
+        else:
+            disp = directory / "disp.png"
+            disp = read_image(str(disp), ImageReadMode.GRAY).float()
+
+            data = torch.cat((color, disp), 0)
+            data = self.augmentation(data)
+            color = data[:3]
+            disp = data[3:]
+            return color, disp

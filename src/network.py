@@ -27,38 +27,47 @@ class NxConv(nn.Module):
         return x
 
 
-class Classifier(nn.Module):
+class Network(nn.Module):
     """
-    Classifies color map.
+    Generates displacement map from color map.
+    Many levels of NxConv, MaxPool which will be put together to form the final image.
 
-    n * (conv, batchnorm, leakyrelu), linear, softmax
+    Input                            ______
+    |_ conv0 ---------------------> |      |
+       |_ maxpool1                  |      |
+       |_ conv1 ------- upsamp ---> | conv | --> displacement map
+          |_ maxpool2               |      |
+          |_ conv2 ---- upsamp ---> |      |
+             ...
     """
 
-    def __init__(self, num_labels: int):
+    def __init__(self):
         super().__init__()
 
-        self.convs = nn.ModuleList()
+        for layer in range(NET_LAYERS):
+            in_ch = 3 if layer == 0 else NET_CONV_CHANNELS
+            conv = NxConv(in_ch, NET_CONV_CHANNELS, NET_CONV_LAYERS, NET_CONV_KERNEL)
+            self.add_module(f"conv{layer}", conv)
+            if layer > 0:
+                pool = nn.MaxPool2d(2, 2)
+                self.add_module(f"pool{layer}", pool)
+                upsamp = nn.Upsample(scale_factor=2 ** layer, mode="bilinear")
+                self.add_module(f"upsamp{layer}", upsamp)
 
-        last_ch = None
-        out_img_size = IMG_SIZE
-        for i in range(NET_CLASS_LAYERS):
-            in_ch = 3 if last_ch is None else last_ch
-            out_ch = in_ch * 2
-            out_img_size //= 2
-            self.convs.append(nn.Sequential(
-                NxConv(in_ch, out_ch, NET_CONV_LAYER_COUNT, NET_CONV_KERNEL_SIZE),
-                nn.MaxPool2d(2),
-            ))
-            last_ch = out_ch
-
-        self.flatten = nn.Flatten()
-        self.linear = nn.Linear(last_ch * out_img_size ** 2, num_labels)
-        self.softmax = nn.Softmax(dim=1)
+        self.regression = NxConv(NET_CONV_CHANNELS*NET_LAYERS, 1, NET_CONV_LAYERS, NET_CONV_KERNEL)
 
     def forward(self, x):
-        for conv in self.convs:
-            x = conv(x)
-        x = self.flatten(x)
-        x = self.linear(x)
-        x = self.softmax(x)
-        return x
+        outputs = []
+        for layer in range(NET_LAYERS):
+            if layer == 0:
+                x = self._modules[f"conv{layer}"](x)
+                outputs.append(x)
+            else:
+                x = self._modules[f"pool{layer}"](x)
+                x = self._modules[f"conv{layer}"](x)
+                out = self._modules[f"upsamp{layer}"](x)
+                outputs.append(out)
+
+        data = torch.cat(outputs, 1)
+        data = self.regression(data)
+        return data
