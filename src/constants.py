@@ -1,0 +1,3 @@
+AUG_JITTER = (0.1, 0, 0.1, 0.05)
+AUG_SHARP = 1
+IMG_SIZE = 1024
