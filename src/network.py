@@ -54,7 +54,7 @@ class Network(nn.Module):
                 upsamp = nn.Upsample(scale_factor=2 ** layer, mode="bilinear")
                 self.add_module(f"upsamp{layer}", upsamp)
 
-        self.regression = nn.Conv2d(NET_CONV_CHANNELS * NET_LAYERS, 1, 1)
+        self.regression = nn.Conv2d(NET_CONV_CHANNELS * NET_LAYERS, 1, 3, padding=1)
         self.tanh = nn.Tanh()
 
     def forward(self, x):
