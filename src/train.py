@@ -10,6 +10,7 @@ from tqdm import trange
 import torch
 from torch.utils.data import DataLoader
 
+import pytorch_ssim
 from constants import *
 from dataset import TextureDataset
 from network import Network
@@ -49,7 +50,7 @@ def train_model(args):
         num_workers=args.data_workers, prefetch_factor=4)
 
     model = Network().to(device)
-    loss_fn = torch.nn.MSELoss()
+    loss_fn = pytorch_ssim.SSIM(window_size=11)
     optim = torch.optim.Adam(model.parameters(), lr=args.lr)
     losses = []
 
@@ -80,8 +81,8 @@ def train_model(args):
 
             model.train()
             out = model(x)
-            loss = loss_fn(out, y)
-            avg_loss += loss.item()
+            loss = -loss_fn(out, y)
+            avg_loss -= loss.item()
 
             optim.zero_grad()
             loss.backward()
