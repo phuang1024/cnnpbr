@@ -1,4 +1,5 @@
 import torch
+import torchvision
 from torch import nn
 
 from constants import *
@@ -32,44 +33,54 @@ class Network(nn.Module):
     Generates displacement map from color map.
     Many levels of NxConv, MaxPool which will be put together to form the final image.
 
-    Input                            ______
-    |_ conv0 ---------------------> |      |
-       |_ maxpool1                  |      |
-       |_ conv1 ------- upsamp ---> | conv | --> displacement map
-          |_ maxpool2               |      |
-          |_ conv2 ---- upsamp ---> |      |
-             ...
+    Input   preconv0 ----------------------- conv3 ---> regression
+      |                                       |
+    1/2 res preconv1 ---------------- conv2, upsamp2
+      |                                |
+    1/4 res preconv2 --------- conv1, upsamp1
+      |                         |
+    1/8 res preconv3 -- conv0, upsamp0
+      |
+    ...
     """
 
     def __init__(self):
         super().__init__()
 
         for layer in range(NET_LAYERS):
-            in_ch = 3 if layer == 0 else NET_CONV_CHANNELS
-            conv = NxConv(in_ch, NET_CONV_CHANNELS, NET_CONV_LAYERS, NET_CONV_KERNEL)
+            preconv = NxConv(3, NET_CONV_CH, NET_CONV_LAYERS, NET_CONV_KERNEL)
+            self.add_module(f"preconv{layer}", preconv)
+
+            channels = NET_CONV_CH * (layer+1)
+            conv = NxConv(channels, channels, NET_CONV_LAYERS, NET_CONV_KERNEL)
             self.add_module(f"conv{layer}", conv)
-            if layer > 0:
-                pool = nn.MaxPool2d(2, 2)
-                self.add_module(f"pool{layer}", pool)
-                upsamp = nn.Upsample(scale_factor=2 ** layer, mode="bilinear")
+
+            if layer < NET_LAYERS - 1:
+                upsamp = nn.Upsample(scale_factor=2, mode="bilinear")
                 self.add_module(f"upsamp{layer}", upsamp)
 
-        self.regression = nn.Conv2d(NET_CONV_CHANNELS * NET_LAYERS, 1, 3, padding=1)
+        self.regression = nn.Conv2d(NET_CONV_CH * NET_LAYERS, 1, 1)
         self.tanh = nn.Tanh()
 
     def forward(self, x):
-        outputs = []
-        for layer in range(NET_LAYERS):
-            if layer == 0:
-                x = self._modules[f"conv{layer}"](x)
-                outputs.append(x)
-            else:
-                x = self._modules[f"pool{layer}"](x)
-                x = self._modules[f"conv{layer}"](x)
-                out = self._modules[f"upsamp{layer}"](x)
-                outputs.append(out)
+        inputs = [x]
+        for i in range(NET_LAYERS-1):
+            img = inputs[-1]
+            img = torchvision.transforms.functional.resize(img, (img.shape[2]//2, img.shape[3]//2))
+            inputs.append(img)
 
-        data = torch.cat(outputs, 1)
-        data = self.regression(data)
-        data = self.tanh(data)
-        return data
+        for i in range(NET_LAYERS):
+            inputs[i] = self._modules[f"preconv{i}"](inputs[i])
+        inputs = list(reversed(inputs))
+
+        x = inputs[0]
+        for i in range(NET_LAYERS):
+            if i > 0:
+                x = torch.cat([x, inputs[i]], dim=1)
+            x = self._modules[f"conv{i}"](x)
+            if i < NET_LAYERS - 1:
+                x = self._modules[f"upsamp{i}"](x)
+
+        x = self.regression(x)
+        x = self.tanh(x)
+        return x
