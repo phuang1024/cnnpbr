@@ -29,7 +29,7 @@ class LossFunc(torch.nn.Module):
     def forward(self, x, y):
         mse = self.mse(x, y)
         ssim = self.ssim(x, y)
-        return mse / ssim
+        return mse + 0.1/ssim
 
 
 def get_session_path(args):
@@ -62,7 +62,7 @@ def train_model(args):
         num_workers=args.data_workers, prefetch_factor=4)
 
     model = Network().to(device)
-    loss_fn = LossFunc()
+    loss_fn = torch.nn.MSELoss()
     optim = torch.optim.Adam(model.parameters(), lr=args.lr)
     losses = []
 
