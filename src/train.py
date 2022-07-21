@@ -20,6 +20,18 @@ ROOT = Path(__file__).absolute().parent
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
+class LossFunc(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.mse = torch.nn.MSELoss()
+        self.ssim = pytorch_ssim.SSIM()
+
+    def forward(self, x, y):
+        mse = self.mse(x, y)
+        ssim = self.ssim(x, y)
+        return mse / ssim
+
+
 def get_session_path(args):
     sess = []
     for d in args.results_path.iterdir():
@@ -50,7 +62,7 @@ def train_model(args):
         num_workers=args.data_workers, prefetch_factor=4)
 
     model = Network().to(device)
-    loss_fn = pytorch_ssim.SSIM(window_size=11)
+    loss_fn = LossFunc()
     optim = torch.optim.Adam(model.parameters(), lr=args.lr)
     losses = []
 
@@ -81,8 +93,8 @@ def train_model(args):
 
             model.train()
             out = model(x)
-            loss = -loss_fn(out, y)
-            avg_loss -= loss.item()
+            loss = loss_fn(out, y)
+            avg_loss += loss.item()
 
             optim.zero_grad()
             loss.backward()
