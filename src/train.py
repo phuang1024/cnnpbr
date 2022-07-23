@@ -54,8 +54,6 @@ def train_model(args):
     train_data, test_data = torch.utils.data.random_split(dataset, [train_size, test_size])
     loader_args = {"batch_size": args.batch_size, "shuffle": True, "pin_memory": True,
             "num_workers": args.data_workers, "prefetch_factor": 2}
-    train_loader = DataLoader(train_data, **loader_args)
-    test_loader = DataLoader(test_data, **loader_args)
 
     # Create network
     model = Network().to(device)
@@ -72,8 +70,8 @@ def train_model(args):
     print("Saving results to:", session_path)
     with log_path.open("w") as f:
         f.write(f"Train start: {datetime.now()}\n")
-        f.write(f"Train samples: {len(train_data)}\n")
-        f.write(f"Test samples: {len(test_data)}\n")
+        f.write(f"Train samples: {train_size}\n")
+        f.write(f"Test samples: {test_size}\n")
         f.write(f"Batch size: {args.batch_size}\n")
         f.write(f"Learning rate: {args.lr:2.2e}\n")
         f.write(f"Weight decay: {args.weight_decay:2.2e}\n")
@@ -91,6 +89,9 @@ def train_model(args):
     shutil.copyfile(ROOT/"constants.py", session_path/"constants.py")
 
     for epoch in (pbar := trange(args.epochs, desc="Training")):
+        train_loader = DataLoader(train_data, **loader_args)
+        test_loader = DataLoader(test_data, **loader_args)
+
         # Train
         train_loss = 0
         for i, (x, y) in enumerate(train_loader):
