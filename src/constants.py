@@ -2,8 +2,8 @@
 IMG_SIZE = 256
 
 # Data augmentation
-AUG_JITTER = (0.1, 0, 0.1, 0.05)
-AUG_SHARP = 1
+AUG_JITTER = (0.1, 0.1, 0.1, 0.05)
+AUG_SHARP = 2
 
 # Network params
 NET_LAYERS = 7

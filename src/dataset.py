@@ -13,7 +13,7 @@ class Augmentation(nn.Module):
     """
     Augmentation of image data.
     Input can be either color map or combined color/disp/... maps.
-    Color adjustment will only be applied to color map.
+    Color adjustment will only be applied to color map (first three channels).
     """
 
     def __init__(self):
@@ -24,22 +24,18 @@ class Augmentation(nn.Module):
             transforms.Normalize(128, 128),
             transforms.RandomVerticalFlip(),
             transforms.RandomHorizontalFlip(),
+            transforms.RandomResizedCrop(IMG_SIZE, scale=(0.5, 1.0), ratio=(0.9, 1.1)),
         )
 
-        """
         self.color = nn.Sequential(
             transforms.ColorJitter(*AUG_JITTER),
             transforms.RandomAdjustSharpness(AUG_SHARP),
         )
-        """
 
     def forward(self, x):
+        x[:3] = self.color(x[:3])
+        x = x.float()
         x = self.transforms(x)
-        """
-        color = x[:3]
-        color = self.color(color)
-        x[:3] = color
-        """
         return x
 
 
@@ -78,7 +74,7 @@ class TextureDataset(Dataset):
         directory = self.dirs[idx]
 
         color = directory / "color.png"
-        color = read_image(str(color)).float()
+        color = read_image(str(color))
 
         if self.output_labels:
             color = self.augmentation(color)
@@ -87,7 +83,7 @@ class TextureDataset(Dataset):
 
         else:
             disp = directory / "disp.png"
-            disp = read_image(str(disp), ImageReadMode.GRAY).float()
+            disp = read_image(str(disp), ImageReadMode.GRAY)
 
             data = torch.cat((color, disp), 0)
             data = self.augmentation(data)
