@@ -9,6 +9,20 @@ from torchvision.io import read_image, ImageReadMode
 from constants import *
 
 
+class RandomNoise(nn.Module):
+    """
+    Add random noise to each pixel.
+    """
+
+    def __init__(self, noise_max: float = 0.05):
+        super().__init__()
+        self.noise_max = noise_max
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        rand = 2 * (torch.rand_like(x)-0.5)
+        return x + rand * self.noise_max
+
+
 class Augmentation(nn.Module):
     """
     Augmentation of image data.
@@ -27,15 +41,22 @@ class Augmentation(nn.Module):
             transforms.RandomResizedCrop(IMG_SIZE, scale=(0.5, 1.0), ratio=(0.9, 1.1)),
         )
 
-        self.color = nn.Sequential(
+        # Apply before normalizing
+        self.color_uint = nn.Sequential(
             transforms.ColorJitter(*AUG_JITTER),
             transforms.RandomAdjustSharpness(AUG_SHARP),
         )
 
+        # Apply after normalizing
+        self.color_float = nn.Sequential(
+            RandomNoise(AUG_NOISE),
+        )
+
     def forward(self, x):
-        x[:3] = self.color(x[:3])
+        x[:3] = self.color_uint(x[:3])
         x = x.float()
         x = self.transforms(x)
+        x[:3] = self.color_float(x[:3])
         return x
 
 

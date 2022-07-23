@@ -60,7 +60,7 @@ def train_model(args):
     # Create network
     model = Network().to(device)
     loss_fn = torch.nn.MSELoss()
-    optim = torch.optim.Adam(model.parameters(), lr=args.lr)
+    optim = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     losses = []
 
     # Write info to results folder
@@ -76,6 +76,7 @@ def train_model(args):
         f.write(f"Test samples: {len(test_data)}\n")
         f.write(f"Batch size: {args.batch_size}\n")
         f.write(f"Learning rate: {args.lr:2.2e}\n")
+        f.write(f"Weight decay: {args.weight_decay:2.2e}\n")
         f.write(f"Epochs: {args.epochs}\n")
         if args.resume == -1:
             f.write("No resume\n\n")
@@ -108,7 +109,6 @@ def train_model(args):
             loss.backward()
             optim.step()
         train_loss /= len(train_loader)
-        time.sleep(2)  # Wait for processes
 
         # Evaluate
         pbar.set_description("evaluating")
@@ -120,22 +120,21 @@ def train_model(args):
             out = model(x)
             test_loss += loss_fn(out, y).item()
         test_loss /= len(test_loader)
-        time.sleep(2)  # Wait for processes
 
         # Save progress
         losses.append((train_loss, test_loss))
         with log_path.open("a") as f:
-            f.write(f"epoch {epoch + 1}/{args.epochs}, avg_loss: {avg_loss}\n")
+            f.write(f"epoch {epoch + 1}/{args.epochs}, train_loss: {train_loss}, test_loss: {test_loss}\n")
         save_path = session_path / "models" / f"epoch_{epoch + 1}.pt"
         save_path.parent.mkdir(parents=True, exist_ok=True)
         torch.save(model.state_dict(), save_path)
 
     # Plot losses
     losses = np.array(losses)
-    plt.subplot(121)
+    plt.subplot(211)
     plt.plot(losses[:, 0], label="train")
 
-    plt.subplot(122)
+    plt.subplot(212)
     plt.plot(losses[:, 1], label="test")
 
     plt.savefig(str(session_path / "loss.jpg"))
