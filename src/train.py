@@ -59,7 +59,7 @@ def train_model(args):
 
     dataset = TextureDataset(args.data_path, False)
     dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True,
-        num_workers=args.data_workers, prefetch_factor=4)
+        num_workers=args.data_workers, pin_memory=True)
 
     model = Network().to(device)
     loss_fn = torch.nn.MSELoss()
