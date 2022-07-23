@@ -1,5 +1,6 @@
 import shutil
 import subprocess
+import time
 from datetime import datetime
 from pathlib import Path
 
@@ -51,7 +52,8 @@ def train_model(args):
     train_size = int(len(dataset) * args.train_split)
     test_size = len(dataset) - train_size
     train_data, test_data = torch.utils.data.random_split(dataset, [train_size, test_size])
-    loader_args = {"batch_size": args.batch_size, "shuffle": True, "pin_memory": True, "num_workers": args.data_workers}
+    loader_args = {"batch_size": args.batch_size, "shuffle": True, "pin_memory": True,
+            "num_workers": args.data_workers, "prefetch_factor": 2}
     train_loader = DataLoader(train_data, **loader_args)
     test_loader = DataLoader(test_data, **loader_args)
 
@@ -87,8 +89,9 @@ def train_model(args):
         f.write(commit + "\n")
     shutil.copyfile(ROOT/"constants.py", session_path/"constants.py")
 
-    # Train
     for epoch in (pbar := trange(args.epochs, desc="Training")):
+        # Train
+        train_loss = 0
         for i, (x, y) in enumerate(train_loader):
             msg = f"epoch {epoch + 1}/{args.epochs}, batch {i + 1}/{len(train_loader)}"
             pbar.set_description(msg, refresh=True)
@@ -99,29 +102,40 @@ def train_model(args):
             model.train()
             out = model(x)
             loss = loss_fn(out, y)
+            train_loss += loss.item()
 
             optim.zero_grad()
             loss.backward()
             optim.step()
+        train_loss /= len(train_loader)
+        time.sleep(2)  # Wait for processes
 
         # Evaluate
-        avg_loss = 0
+        pbar.set_description("evaluating")
+        test_loss = 0
         for i, (x, y) in enumerate(test_loader):
             x = x.to(device)
             y = y.to(device)
             model.eval()
             out = model(x)
-            avg_loss += loss_fn(out, y).item()
-        avg_loss /= len(test_loader)
+            test_loss += loss_fn(out, y).item()
+        test_loss /= len(test_loader)
+        time.sleep(2)  # Wait for processes
 
         # Save progress
-        losses.append(avg_loss)
+        losses.append((train_loss, test_loss))
         with log_path.open("a") as f:
             f.write(f"epoch {epoch + 1}/{args.epochs}, avg_loss: {avg_loss}\n")
         save_path = session_path / "models" / f"epoch_{epoch + 1}.pt"
         save_path.parent.mkdir(parents=True, exist_ok=True)
         torch.save(model.state_dict(), save_path)
 
-    plt.plot(losses)
-    plt.title("Loss on test set")
+    # Plot losses
+    losses = np.array(losses)
+    plt.subplot(121)
+    plt.plot(losses[:, 0], label="train")
+
+    plt.subplot(122)
+    plt.plot(losses[:, 1], label="test")
+
     plt.savefig(str(session_path / "loss.jpg"))
