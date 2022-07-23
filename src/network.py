@@ -17,7 +17,7 @@ class NxConv(nn.Module):
         for i in range(layer_count):
             self.layers.append(nn.Sequential(
                 nn.Conv2d(in_ch, out_ch, kernel_size, padding=kernel_size // 2),
-                nn.BatchNorm2d(out_ch),
+                nn.BatchNorm2d(out_ch, momentum=NET_BN_MOMENTUM),
                 nn.LeakyReLU(NET_LRELU_ALPHA),
             ))
             in_ch = out_ch

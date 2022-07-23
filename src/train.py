@@ -51,7 +51,6 @@ def train_model(args):
     dataset = TextureDataset(args.data_path, False)
     train_size = int(len(dataset) * args.train_split)
     test_size = len(dataset) - train_size
-    train_data, test_data = torch.utils.data.random_split(dataset, [train_size, test_size])
     loader_args = {"batch_size": args.batch_size, "shuffle": True, "pin_memory": True,
             "num_workers": args.data_workers, "prefetch_factor": 2}
 
@@ -89,19 +88,20 @@ def train_model(args):
     shutil.copyfile(ROOT/"constants.py", session_path/"constants.py")
 
     for epoch in (pbar := trange(args.epochs, desc="Training")):
+        train_data, test_data = torch.utils.data.random_split(dataset, [train_size, test_size])
         train_loader = DataLoader(train_data, **loader_args)
         test_loader = DataLoader(test_data, **loader_args)
 
         # Train
+        model.train()
         train_loss = 0
         for i, (x, y) in enumerate(train_loader):
-            msg = f"epoch {epoch + 1}/{args.epochs}, batch {i + 1}/{len(train_loader)}"
+            msg = f"Train: epoch {epoch + 1}/{args.epochs}, batch {i + 1}/{len(train_loader)}"
             pbar.set_description(msg, refresh=True)
 
             x = x.to(device)
             y = y.to(device)
 
-            model.train()
             out = model(x)
             loss = loss_fn(out, y)
             train_loss += loss.item()
@@ -112,12 +112,14 @@ def train_model(args):
         train_loss /= len(train_loader)
 
         # Evaluate
-        pbar.set_description("evaluating")
+        model.eval()
         test_loss = 0
         for i, (x, y) in enumerate(test_loader):
+            msg = f"Eval: epoch {epoch + 1}/{args.epochs}, batch {i + 1}/{len(test_loader)}"
+            pbar.set_description(msg, refresh=True)
+
             x = x.to(device)
             y = y.to(device)
-            model.eval()
             out = model(x)
             test_loss += loss_fn(out, y).item()
         test_loss /= len(test_loader)

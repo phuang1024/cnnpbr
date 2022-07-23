@@ -8,6 +8,8 @@ from constants import *
 from dataset import TextureDataset
 from network import Network
 
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
 
 def get_model_path(session, epoch, results_path):
     if session == -1:
@@ -20,7 +22,7 @@ def get_model_path(session, epoch, results_path):
 
 
 def show_results(args):
-    model = Network()
+    model = Network().to(device)
     params_path = get_model_path(args.session, args.epoch, args.results_path)
     print(f"Loading model from {params_path}")
     model.load_state_dict(torch.load(params_path))
@@ -31,11 +33,14 @@ def show_results(args):
 
     next_i = 0
     for color, truth in dataset:
+        color, truth = color.to(device), truth.to(device)
+
         color = color.unsqueeze(0)
         truth = truth.unsqueeze(0)
 
+        model.eval()
         pred = model(color)
-        color, pred, truth = color.detach().numpy(), pred.detach().numpy(), truth.numpy()
+        color, pred, truth = color.detach().cpu().numpy(), pred.detach().cpu().numpy(), truth.cpu().numpy()
 
         color = ((color * 0.5 + 0.5) * 255).astype(np.uint8)
         pred = ((pred * 0.5 + 0.5) * 255).astype(np.uint8)
