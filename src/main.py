@@ -24,6 +24,7 @@ def get_args():
     trainp.add_argument("--batch-size", type=int, default=4, help="Batch size.")
     trainp.add_argument("--lr", type=float, default=1e-3, help="Learning rate.")
     trainp.add_argument("--data-workers", type=int, default=4, help="Number of data workers.")
+    trainp.add_argument("--resume", type=int, default=-1, help="Resume from this session, last epoch.")
 
     resultsp = subp.add_parser("results", help="Generate results.")
     resultsp.add_argument("--session", type=int, default=-1, help="Session number.")

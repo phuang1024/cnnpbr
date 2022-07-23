@@ -14,6 +14,7 @@ import pytorch_ssim
 from constants import *
 from dataset import TextureDataset
 from network import Network
+from results import get_model_path
 
 ROOT = Path(__file__).absolute().parent
 
@@ -66,6 +67,11 @@ def train_model(args):
     optim = torch.optim.Adam(model.parameters(), lr=args.lr)
     losses = []
 
+    if args.resume != -1:
+        last_path = get_model_path(args.resume, -1, args.results_path)
+        print(f"Loading model from {last_path}")
+        model.load_state_dict(torch.load(last_path))
+
     # Write info to results folder
     print("Saving results to:", session_path)
     with log_path.open("w") as f:
@@ -73,7 +79,11 @@ def train_model(args):
         f.write(f"Train samples: {len(dataset)}\n")
         f.write(f"Batch size: {args.batch_size}\n")
         f.write(f"Learning rate: {args.lr}\n")
-        f.write(f"Epochs: {args.epochs}\n\n")
+        f.write(f"Epochs: {args.epochs}\n")
+        if args.resume == -1:
+            f.write("No resume\n\n")
+        else:
+            f.write(f"Resume from session {args.resume}\n\n")
         f.write(f"Train progress:\n")
     with (session_path/"model.txt").open("w") as f:
         f.write(str(model))

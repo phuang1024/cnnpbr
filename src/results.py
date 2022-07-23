@@ -9,23 +9,19 @@ from dataset import TextureDataset
 from network import Network
 
 
-def get_model_path(args):
-    if args.session == -1:
-        session = max(map(int, (p.name for p in args.results_path.iterdir())))
-    else:
-        session = args.session
-    models_path = args.results_path / f"{session:03d}" / "models"
+def get_model_path(session, epoch, results_path):
+    if session == -1:
+        session = max(map(int, (p.name for p in results_path.iterdir())))
+    models_path = results_path / f"{session:03d}" / "models"
 
-    if args.epoch == -1:
+    if epoch == -1:
         epoch = max(int(p.stem.split("_")[-1]) for p in models_path.iterdir())
-    else:
-        epoch = args.epoch
     return models_path / f"epoch_{epoch}.pt"
 
 
 def show_results(args):
     model = Network()
-    params_path = get_model_path(args)
+    params_path = get_model_path(args.session, args.epoch, args.results_path)
     print(f"Loading model from {params_path}")
     model.load_state_dict(torch.load(params_path))
 
