@@ -60,7 +60,7 @@ class Network(nn.Module):
                 self.add_module(f"upsamp{layer}", upsamp)
 
         self.regression = nn.Conv2d(NET_CONV_CH * NET_LAYERS, 1, 1)
-        self.tanh = nn.Tanh()
+        self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
         inputs = [x]
@@ -82,5 +82,5 @@ class Network(nn.Module):
                 x = self._modules[f"upsamp{i}"](x)
 
         x = self.regression(x)
-        x = self.tanh(x)
+        x = self.sigmoid(x)
         return x

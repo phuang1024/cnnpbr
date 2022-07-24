@@ -23,6 +23,7 @@ def get_model_path(session, epoch, results_path):
 
 def show_results(args):
     model = Network().to(device)
+    model.eval()
     params_path = get_model_path(args.session, args.epoch, args.results_path)
     print(f"Loading model from {params_path}")
     model.load_state_dict(torch.load(params_path))
@@ -42,9 +43,9 @@ def show_results(args):
         pred = model(color)
         color, pred, truth = color.detach().cpu().numpy(), pred.detach().cpu().numpy(), truth.cpu().numpy()
 
-        color = ((color * 0.5 + 0.5) * 255).astype(np.uint8)
-        pred = ((pred * 0.5 + 0.5) * 255).astype(np.uint8)
-        truth = ((truth * 0.5 + 0.5) * 255).astype(np.uint8)
+        color = (color * 255).astype(np.uint8)
+        pred = (pred * 255).astype(np.uint8)
+        truth = (truth * 255).astype(np.uint8)
 
         color = color.transpose((0, 2, 3, 1))
         pred = pred.transpose((0, 2, 3, 1))

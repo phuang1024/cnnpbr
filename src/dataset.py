@@ -35,7 +35,7 @@ class Augmentation(nn.Module):
 
         self.transforms = nn.Sequential(
             transforms.Resize(IMG_SIZE),
-            transforms.Normalize(128, 128),
+            transforms.Normalize(0, 255),
             transforms.RandomVerticalFlip(),
             transforms.RandomHorizontalFlip(),
             transforms.RandomResizedCrop(IMG_SIZE, scale=(0.5, 1.0), ratio=(0.9, 1.1)),
