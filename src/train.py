@@ -52,7 +52,7 @@ def train_model(args):
     train_size = int(len(dataset) * args.train_split)
     test_size = len(dataset) - train_size
     loader_args = {"batch_size": args.batch_size, "shuffle": True, "pin_memory": True,
-            "prefetch_factor": 2}
+            "prefetch_factor": 4, "num_workers": args.data_workers}
 
     # Create network
     model = Network().to(device)
@@ -89,13 +89,16 @@ def train_model(args):
 
     for epoch in (pbar := trange(args.epochs, desc="Training")):
         train_data, test_data = torch.utils.data.random_split(dataset, [train_size, test_size])
-        train_loader = DataLoader(train_data, **loader_args, num_workers=args.data_workers)
+        train_loader = DataLoader(train_data, **loader_args)
         test_loader = DataLoader(test_data, **loader_args)
+        #train_loader = DataLoader(dataset, **loader_args)
+        #test_loader = train_loader
 
         # Train
         model.train()
         model.zero_grad()
-        train_loss = 0
+        optim.zero_grad()
+        train_loss = []
         for i, (x, y) in enumerate(train_loader):
             msg = f"Train: epoch {epoch + 1}/{args.epochs}, batch {i + 1}/{len(train_loader)}"
             pbar.set_description(msg, refresh=True)
@@ -103,13 +106,17 @@ def train_model(args):
             x = x.to(device)
             y = y.to(device)
             out = model(x)
-            loss = loss_fn(out, y)
-            train_loss += loss.item()
 
-            optim.zero_grad()
+            loss = loss_fn(out, y)
+            train_loss.append(loss.item())
+            loss /= args.batch_step  # Normalize loss by batches per step
             loss.backward()
-            optim.step()
-        train_loss /= len(train_loader)
+
+            if (i+1) % args.batch_step == 0:
+                optim.step()
+                optim.zero_grad()
+                model.zero_grad()
+        train_loss = sum(train_loss) / len(train_loss)
 
         # Evaluate
         with torch.no_grad():
@@ -122,8 +129,7 @@ def train_model(args):
                 x = x.to(device)
                 y = y.to(device)
                 out = model(x)
-                test_loss += loss_fn(out, y).item()
-            test_loss /= len(test_loader)
+                test_loss += loss_fn(out, y).item() / len(test_loader)
 
         # Save progress
         losses.append((train_loss, test_loss))

@@ -38,7 +38,7 @@ class Augmentation(nn.Module):
             transforms.Normalize(0, 255),
             transforms.RandomVerticalFlip(),
             transforms.RandomHorizontalFlip(),
-            transforms.RandomResizedCrop(IMG_SIZE, scale=(0.5, 1.0), ratio=(0.9, 1.1)),
+            transforms.RandomResizedCrop(IMG_SIZE, scale=(0.25, 1.0), ratio=(0.9, 1.1)),
         )
 
         # Apply before normalizing
@@ -78,6 +78,9 @@ class TextureDataset(Dataset):
     """
 
     def __init__(self, data_path, output_labels: bool):
+        """
+        :param output_labels: If True, return label as y.
+        """
         self.output_labels = output_labels
         self.data_path = Path(data_path)
         self.labels = sorted(p.name for p in self.data_path.iterdir() if p.is_dir())
@@ -85,6 +88,7 @@ class TextureDataset(Dataset):
         self.dirs = []
         for d in self.data_path.iterdir():
             self.dirs.extend(d.iterdir())
+        #self.dirs = self.dirs[:1]  # TODO for testing
 
         self.augmentation = Augmentation()
 

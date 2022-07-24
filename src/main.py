@@ -22,6 +22,7 @@ def get_args():
     trainp = subp.add_parser("train", help="Train a model.")
     trainp.add_argument("--epochs", type=int, default=10, help="Number of epochs to train.")
     trainp.add_argument("--batch-size", type=int, default=4, help="Batch size.")
+    trainp.add_argument("--batch-step", type=int, default=16, help="Number of batches per step.")
     trainp.add_argument("--lr", type=float, default=1e-4, help="Learning rate.")
     trainp.add_argument("--weight-decay", type=float, default=1e-6, help="Weight decay.")
     trainp.add_argument("--data-workers", type=int, default=2, help="Number of data workers.")

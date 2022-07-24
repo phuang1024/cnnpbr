@@ -31,26 +31,26 @@ def show_results(args):
     plt.axis("off")
 
     dataset = TextureDataset(args.data_path, False)
+    dataloader = DataLoader(dataset, batch_size=1, shuffle=True)
 
     next_i = 0
-    for color, truth in dataset:
+    for color, truth in dataloader:
         color, truth = color.to(device), truth.to(device)
-
-        color = color.unsqueeze(0)
-        truth = truth.unsqueeze(0)
 
         model.eval()
         pred = model(color)
         color, pred, truth = color.detach().cpu().numpy(), pred.detach().cpu().numpy(), truth.cpu().numpy()
+        loss = np.power(pred - truth, 2)
 
         color = (color * 255).astype(np.uint8)
         pred = (pred * 255).astype(np.uint8)
         truth = (truth * 255).astype(np.uint8)
+        loss = (loss * 255).astype(np.uint8)
 
         color = color.transpose((0, 2, 3, 1))
         pred = pred.transpose((0, 2, 3, 1))
         truth = truth.transpose((0, 2, 3, 1))
-        loss = np.power(pred - truth, 2)
+        loss = loss.transpose((0, 2, 3, 1))
 
         plt.subplot(4, 8, next_i + 1)
         plt.imshow(color[0])
@@ -73,3 +73,5 @@ def show_results(args):
         if next_i == 8:
             next_i = 0
             plt.show()
+
+    plt.show()
