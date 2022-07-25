@@ -9,7 +9,7 @@ AUG_NOISE = 0.03
 # Network params
 NET_LAYERS = 8
 NET_BN_MOMENTUM = 0.1
-NET_CONV_CH = 32
-NET_CONV_LAYERS = 4     # Each NxConv layer count.
+NET_CONV_CH = 16
+NET_CONV_LAYERS = 2     # Each NxConv layer count.
 NET_CONV_KERNEL = 3
 NET_ELU_ALPHA = 1
