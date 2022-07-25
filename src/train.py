@@ -136,9 +136,10 @@ def train_model(args):
         losses.append((train_loss, test_loss))
         with log_path.open("a") as f:
             f.write(f"epoch {epoch + 1}/{args.epochs}, train_loss: {train_loss}, test_loss: {test_loss}\n")
-        save_path = session_path / "models" / f"epoch_{epoch + 1}.pt"
-        save_path.parent.mkdir(parents=True, exist_ok=True)
-        torch.save(model.state_dict(), save_path)
+        if epoch % args.save_every == 0:
+            save_path = session_path / "models" / f"epoch_{epoch + 1}.pt"
+            save_path.parent.mkdir(parents=True, exist_ok=True)
+            torch.save(model.state_dict(), save_path)
 
     # Plot losses
     losses = np.array(losses)
