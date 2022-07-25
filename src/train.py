@@ -56,7 +56,7 @@ def train_model(args):
 
     # Create network
     model = Network().to(device)
-    loss_fn = torch.nn.MSELoss()
+    loss_fn = torch.nn.HuberLoss().to(device)
     optim = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     losses = []
 
