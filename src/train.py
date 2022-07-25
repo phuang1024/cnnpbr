@@ -116,6 +116,7 @@ def train_model(args):
                 optim.step()
                 optim.zero_grad()
                 model.zero_grad()
+        optim.step()  # Any remaining gradients
         train_loss = sum(train_loss) / len(train_loss)
 
         # Evaluate

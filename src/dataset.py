@@ -23,22 +23,27 @@ class RandomNoise(nn.Module):
         return x + rand * self.noise_max
 
 
-class Augmentation(nn.Module):
+class Transforms(nn.Module):
     """
-    Augmentation of image data.
+    Transforms image data.
+    Specify whether to augment in constructor.
     Input can be either color map or combined color/disp/... maps.
     Color adjustment will only be applied to color map (first three channels).
     """
 
-    def __init__(self):
+    def __init__(self, augment: bool = False):
         super().__init__()
+        self.augment = augment
 
         self.transforms = nn.Sequential(
             transforms.Resize(IMG_SIZE),
             transforms.Normalize(0, 255),
+        )
+
+        self.rand_trans = nn.Sequential(
             transforms.RandomVerticalFlip(),
             transforms.RandomHorizontalFlip(),
-            transforms.RandomResizedCrop(IMG_SIZE, scale=(0.25, 1.0), ratio=(0.9, 1.1)),
+            transforms.RandomResizedCrop(IMG_SIZE, scale=(0.5, 1.0), ratio=(0.9, 1.1)),
         )
 
         # Apply before normalizing
@@ -53,10 +58,13 @@ class Augmentation(nn.Module):
         )
 
     def forward(self, x):
-        x[:3] = self.color_uint(x[:3])
+        if self.augment:
+            x[:3] = self.color_uint(x[:3])
         x = x.float()
         x = self.transforms(x)
-        x[:3] = self.color_float(x[:3])
+        if self.augment:
+            x = self.rand_trans(x)
+            x[:3] = self.color_float(x[:3])
         return x
 
 
@@ -79,8 +87,7 @@ class TextureDataset(Dataset):
 
     def __init__(self, data_path, augment: bool = True):
         super().__init__()
-        self.augmentation = Augmentation()
-        self.augment = augment
+        self.transform = Transforms(augment)
         self.data_path = Path(data_path)
         self.dirs = []
         for d in self.data_path.iterdir():
@@ -95,8 +102,7 @@ class TextureDataset(Dataset):
         disp = read_image(str(directory / "disp.png"), ImageReadMode.GRAY)
 
         data = torch.cat((color, disp), 0)
-        if self.augment:
-            data = self.augmentation(data)
+        data = self.transform(data)
 
         color = data[:3]
         disp = data[3:]
