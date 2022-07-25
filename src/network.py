@@ -48,7 +48,7 @@ class Network(nn.Module):
         super().__init__()
 
         for layer in range(NET_LAYERS):
-            preconv = NxConv(3, NET_CONV_CH, NET_CONV_LAYERS, NET_CONV_KERNEL)
+            preconv = NxConv(3, NET_CONV_CH, NET_PRECONV_LAYERS, NET_CONV_KERNEL)
             self.add_module(f"preconv{layer}", preconv)
 
             channels = NET_CONV_CH * (layer+1)
