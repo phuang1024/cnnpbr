@@ -48,7 +48,7 @@ def train_model(args):
     log_path = session_path / "train.log"
 
     # Get data
-    dataset = TextureDataset(args.data_path, False)
+    dataset = TextureDataset(args.data_path)
     train_size = int(len(dataset) * args.train_split)
     test_size = len(dataset) - train_size
     loader_args = {"batch_size": args.batch_size, "shuffle": True, "pin_memory": True,
@@ -89,10 +89,10 @@ def train_model(args):
 
     for epoch in (pbar := trange(args.epochs, desc="Training")):
         train_data, test_data = torch.utils.data.random_split(dataset, [train_size, test_size])
+        train_data.augment = True
+        test_data.augment = False
         train_loader = DataLoader(train_data, **loader_args)
         test_loader = DataLoader(test_data, **loader_args)
-        #train_loader = DataLoader(dataset, **loader_args)
-        #test_loader = train_loader
 
         # Train
         model.train()

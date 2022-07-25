@@ -63,7 +63,7 @@ class Augmentation(nn.Module):
 class TextureDataset(Dataset):
     """
     Input: color map
-    Output: label OR disp map (specify in constructor)
+    Output: disp map
 
     Make your data path structure like this:
 
@@ -77,41 +77,27 @@ class TextureDataset(Dataset):
     |   ...
     """
 
-    def __init__(self, data_path, output_labels: bool):
-        """
-        :param output_labels: If True, return label as y.
-        """
-        self.output_labels = output_labels
+    def __init__(self, data_path, augment: bool = True):
+        super().__init__()
+        self.augmentation = Augmentation()
+        self.augment = augment
         self.data_path = Path(data_path)
-        self.labels = sorted(p.name for p in self.data_path.iterdir() if p.is_dir())
-
         self.dirs = []
         for d in self.data_path.iterdir():
             self.dirs.extend(d.iterdir())
-        #self.dirs = self.dirs[:1]  # TODO for testing
-
-        self.augmentation = Augmentation()
 
     def __len__(self):
         return len(self.dirs)
 
     def __getitem__(self, idx):
         directory = self.dirs[idx]
+        color = read_image(str(directory / "color.png"), mode=ImageReadMode.RGB)
+        disp = read_image(str(directory / "disp.png"), ImageReadMode.GRAY)
 
-        color = directory / "color.png"
-        color = read_image(str(color))
-
-        if self.output_labels:
-            color = self.augmentation(color)
-            label = self.labels.index(directory.parent.name)
-            return color, label
-
-        else:
-            disp = directory / "disp.png"
-            disp = read_image(str(disp), ImageReadMode.GRAY)
-
-            data = torch.cat((color, disp), 0)
+        data = torch.cat((color, disp), 0)
+        if self.augment:
             data = self.augmentation(data)
-            color = data[:3]
-            disp = data[3:]
-            return color, disp
+
+        color = data[:3]
+        disp = data[3:]
+        return color, disp
