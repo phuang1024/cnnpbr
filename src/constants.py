@@ -2,7 +2,7 @@
 IMG_SIZE = 256
 
 # Data augmentation
-AUG_JITTER = (0.05, 0.05, 0.05, 0.03)
+AUG_JITTER = (0.08, 0.08, 0.08, 0.05)
 AUG_SHARP = 2
 AUG_NOISE = 0.03
 
