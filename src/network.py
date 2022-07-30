@@ -49,21 +49,21 @@ class Network(nn.Module):
 
         self.num_channels = []   # Number of input and output channels of conv_n.
         for layer in range(NET_LAYERS):
+            output_ch = NET_CONV_CH * (layer+1)
             if layer == 0:
-                self.num_channels.append(NET_PRECONV_CH)
+                input_ch = NET_PRECONV_CH
             else:
-                num = NET_PRECONV_CH + sum(self.num_channels)
-                self.num_channels.append(num)
+                input_ch = NET_PRECONV_CH + sum(a[1] for a in self.num_channels)
+            self.num_channels.append((input_ch, output_ch))
 
         for layer in range(NET_LAYERS):
             preconv = NxConv(3, NET_PRECONV_CH, NET_PRECONV_LAYERS, 3)
             self.add_module(f"preconv{layer}", preconv)
 
-            ch = self.num_channels[layer]
-            conv = NxConv(ch, ch, NET_CONV_LAYERS, 3)
+            conv = NxConv(*self.num_channels[layer], NET_CONV_LAYERS, 3)
             self.add_module(f"conv{layer}", conv)
 
-        self.regression = nn.Conv2d(self.num_channels[-1], 1, 1)
+        self.regression = nn.Conv2d(self.num_channels[-1][1], 1, 1)
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
