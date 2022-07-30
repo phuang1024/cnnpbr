@@ -52,7 +52,7 @@ def train_model(args):
     train_size = int(len(dataset) * args.train_split)
     test_size = len(dataset) - train_size
     loader_args = {"batch_size": args.batch_size, "shuffle": True, "pin_memory": True,
-            "prefetch_factor": 4, "num_workers": args.data_workers}
+            "num_workers": args.data_workers}
 
     # Create network
     model = Network().to(device)
