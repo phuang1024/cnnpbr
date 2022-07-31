@@ -14,7 +14,7 @@ class RandomNoise(nn.Module):
     Add random noise to each pixel.
     """
 
-    def __init__(self, noise_max: float = 0.05):
+    def __init__(self, noise_max):
         super().__init__()
         self.noise_max = noise_max
 
@@ -48,13 +48,13 @@ class Transforms(nn.Module):
 
         # Apply before normalizing
         self.color_uint = nn.Sequential(
-            transforms.ColorJitter(*AUG_JITTER),
-            transforms.RandomAdjustSharpness(AUG_SHARP),
+            transforms.ColorJitter(0.08, 0.08, 0.08, 0.05),
+            transforms.RandomAdjustSharpness(2),
         )
 
         # Apply after normalizing
         self.color_float = nn.Sequential(
-            RandomNoise(AUG_NOISE),
+            RandomNoise(0.02),
         )
 
     def forward(self, x):
@@ -65,6 +65,7 @@ class Transforms(nn.Module):
         if self.augment:
             x = self.rand_trans(x)
             x[:3] = self.color_float(x[:3])
+        x = torch.clamp(x, 0, 1)
         return x
 
 
