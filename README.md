@@ -2,6 +2,8 @@
 
 Physically based rendering texture maps using CNNs.
 
+(This is my first ML project so it may be messy and bad.)
+
 ## About
 
 For 3D creation, sometimes textures (images) are used to create a photorealistic look.
