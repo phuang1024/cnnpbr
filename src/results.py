@@ -52,21 +52,23 @@ def show_results(args):
         truth = truth.transpose((0, 2, 3, 1))
         loss = loss.transpose((0, 2, 3, 1))
 
-        plt.subplot(4, 8, next_i + 1)
+        plt.subplot(3, 8, next_i + 1)
         plt.imshow(color[0])
         plt.title("Input (color)")
 
-        plt.subplot(4, 8, 8 + next_i + 1)
+        plt.subplot(3, 8, 8 + next_i + 1)
         plt.imshow(pred[0])
         plt.title("Prediction (disp)")
 
-        plt.subplot(4, 8, 16 + next_i + 1)
+        plt.subplot(3, 8, 16 + next_i + 1)
         plt.imshow(truth[0])
         plt.title("Truth (disp)")
 
+        """
         plt.subplot(4, 8, 24 + next_i + 1)
         plt.imshow(loss[0])
         plt.title("Loss (disp)")
+        """
 
         next_i += 1
 

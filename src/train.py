@@ -96,7 +96,6 @@ def train_model(args):
 
         # Train
         model.train()
-        model.zero_grad()
         optim.zero_grad()
         train_loss = []
         for i, (x, y) in enumerate(train_loader):
@@ -115,7 +114,6 @@ def train_model(args):
             if (i+1) % args.batch_step == 0:
                 optim.step()
                 optim.zero_grad()
-                model.zero_grad()
         train_loss = sum(train_loss) / len(train_loss)
 
         # Evaluate
